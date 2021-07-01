@@ -2,8 +2,7 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "../imported/ICommunity.sol";
-import "../imported/IDistributedTown.sol";
+import "distributed-town-smart-contracts/contracts/IDistributedTown.sol";
 import "skill-wallet/contracts/main/ISkillWallet.sol";
 import "./InteractionNFT.sol"; 
 
