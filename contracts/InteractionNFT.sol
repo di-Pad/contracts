@@ -14,7 +14,6 @@ contract InteractionNFT is ERC1155Burnable {
     uint public constant ROLE2 = 1;
     uint public constant ROLE3 = 2;
 
-    // who's the message sender - contract per partners agreement?
     constructor(uint rolesCount, uint totalSupply) public ERC1155('') {
         if(rolesCount == 2) {
             uint role2Tokens = totalSupply * 43/100;
