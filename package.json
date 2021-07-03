@@ -26,7 +26,7 @@
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "3.4.1",
     "@tenderly/hardhat-tenderly": "^1.0.10",
-    "distributed-town-smart-contracts":"0.0.2-alpha",
+    "distributed-town-smart-contracts":"0.0.2-beta",
     "chai": "^4.2.0",
     "chalk": "^4.1.0",
     "ethereum-waffle": "^3.1.1",

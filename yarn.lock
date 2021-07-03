@@ -3256,10 +3256,10 @@ diffie-hellman@^5.0.0:
     miller-rabin "^4.0.0"
     randombytes "^2.0.0"
 
-distributed-town-smart-contracts@0.0.2-alpha:
-  version "0.0.2-alpha"
-  resolved "https://registry.yarnpkg.com/distributed-town-smart-contracts/-/distributed-town-smart-contracts-0.0.2-alpha.tgz#f503b6d05a29a6a02f3d8ee698b199ffd3175cdf"
-  integrity sha512-gLNF0dDuPqttEgY/pKM93o28RtiXKkKe2ZlSB4f6lh1/bnqA9Nw898/fRLdRr6KyT4LhCtdEeG6dlcrejyybow==
+distributed-town-smart-contracts@0.0.2-beta:
+  version "0.0.2-beta"
+  resolved "https://registry.yarnpkg.com/distributed-town-smart-contracts/-/distributed-town-smart-contracts-0.0.2-beta.tgz#3356cbb0820acf7d08d668e667ced9960e591e7c"
+  integrity sha512-WwA3KeCjqkVjPaAHRAxDilDf4b+FHC5R4pvgHTZaiZapDlwLraCevw81CbfVmP8RxDhRh0RGXrCJLa5t368hEg==
   dependencies:
     "@nomiclabs/hardhat-ethers" "^2.0.0"
     "@nomiclabs/hardhat-etherscan" "^2.1.1"

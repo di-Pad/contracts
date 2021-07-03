@@ -2,10 +2,10 @@
 pragma solidity ^0.6.10;
 
 import "skill-wallet/contracts/main/ISkillWallet.sol";
-import "distributed-town-smart-contracts/contracts/IDistributedTown.sol";
 
 import "./Treasury.sol";
 import "./InteractionNFT.sol";
+import "./IDistributedTown.sol";
 
 contract PartnersAgreement {
     address partnersContract;
