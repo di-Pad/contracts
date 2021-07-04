@@ -20,7 +20,8 @@ interface IDistributedTown {
     function createCommunity(
         string calldata communityMetadata,
         uint256 template,
-        uint totalMembersAllowed
+        uint totalMembersAllowed,
+        address owner
     ) external;
 
     function getCommunities() external view returns (address[] memory);

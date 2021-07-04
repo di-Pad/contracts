@@ -1,7 +1,7 @@
-// const partnersRegistryAddress = '0x6994Ca125793ABD5BDD0d912e4283ED1c542ceb7'
-// const distributedTownAddress = '0x1d08c93724741eE0E43ac9D623A127F48B16c2a8'
-const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
-const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
+const partnersRegistryAddress = '0x68565f98f7d565A3019ED6EB5dA921156Ff7ab10'
+const distributedTownAddress = '0xc91be9B71A1f0e79393898b9263cb77eF7682D79'
+// const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
+// const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
 const { assert } = require('chai')
 var ethers = require('ethers')
 var partnersRegistryAbi = require('../artifacts/contracts/PartnersRegistry.sol/PartnersRegistry.json')
@@ -13,21 +13,19 @@ var distributedTownAbi = require('../artifacts/contracts/IDistributedTown.sol/ID
   .abi
 
 // const userAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
-function mnemonic() {
-  return 'close gesture fatal vacant time toy general horror payment visit case you'
-}
+// function mnemonic() {
+//   return 'close gesture fatal vacant time toy general horror payment visit case you'
+// }
 
 const provider = new ethers.providers.JsonRpcProvider(
-  // 'https://rpc-mumbai.maticvigil.com',
+  'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
+  
 
-  'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
+  // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
 )
 
 // Wallet connected to a provider
-const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
-  mnemonic(),
-  "m/44'/60'/0'/0/0",
-)
+const senderWalletMnemonic = new ethers.Wallet('privKey')
 
 let signer = senderWalletMnemonic.connect(provider)
 
@@ -59,8 +57,8 @@ async function createPartnersAgreement() {
     3,
     100,
     '0x1d08c93724741eE0E43ac9D623A127F48B16c2a8',
-    50,
-    // { gasPrice: 10000000, gasLimit: 85000 }
+    50
+    // { gasPrice: 100000000, gasLimit: 85000 }
 
   )
   const createTxResult = await createTx.wait()
@@ -76,7 +74,7 @@ async function createPartnersAgreement() {
 }
 
 async function test() {
-//   await setPartnersRegistryAddress();
+  // await setPartnersRegistryAddress();
   await createPartnersAgreement()
 }
 

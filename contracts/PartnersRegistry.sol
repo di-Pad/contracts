@@ -37,7 +37,7 @@ contract PartnersRegistry {
             "Number of actions should be between 1 and 100"
         );
 
-        distributedTown.createCommunity(metadata, template, membersAllowed);
+        distributedTown.createCommunity(metadata, template, membersAllowed, msg.sender);
         address communityAddress = distributedTown.getCommunityByOwner(
             msg.sender
         );
