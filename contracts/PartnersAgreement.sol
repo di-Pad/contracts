@@ -49,7 +49,7 @@ contract PartnersAgreement is ChainlinkClient {
         
         setChainlinkToken(address(0));
         oracle = address(0);
-        jobId = "31061086cb2749f7a3f99f2d5179caf7";
+        jobId = "e1e26fa27aa7436c95a78a40c21f5404";
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
