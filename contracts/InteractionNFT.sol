@@ -16,7 +16,7 @@ contract InteractionNFT is ERC1155Burnable {
     uint public constant ROLE2 = 1;
     uint public constant ROLE3 = 2;
 
-    mapping(address => uint) userRoles;
+    mapping(address => uint) public userRoles;
 
     mapping(address => uint) inactiveInteractions;
 

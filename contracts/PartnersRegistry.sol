@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 
-import "./ISkillWallet.sol";
-
 import "./PartnersAgreement.sol";
 import "./IDistributedTown.sol";
 import "./ICommunity.sol";
+
+import "skill-wallet/contracts/main/ISkillWallet.sol";
 
 contract PartnersRegistry {
 

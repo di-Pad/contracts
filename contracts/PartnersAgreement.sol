@@ -2,14 +2,15 @@
 pragma solidity ^0.6.10;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
+import "skill-wallet/contracts/main/ISkillWallet.sol";
 
-import "./ISkillWallet.sol";
-import "./TokenDistribution.sol";
 import "./InteractionNFT.sol";
-import "./ICommunity.sol";
 import "./IDistributedTown.sol";
 import "./SupportedTokens.sol";
+import "./TokenDistribution.sol";
+import "./ICommunity.sol";
 import "./ProfitSharing.sol";
+
 
 contract PartnersAgreement is ChainlinkClient {
     address public owner;
@@ -52,7 +53,7 @@ contract PartnersAgreement is ChainlinkClient {
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    function getAllMembers() public returns (address[] memory) {
+    function getAllMembers() public view returns (address[] memory) {
         // TODO - add getMembers function in community.
         ICommunity community = ICommunity(communityAddress);
         ISkillWallet skillWallet = ISkillWallet(community.getSkillWalletAddress());
@@ -99,10 +100,7 @@ contract PartnersAgreement is ChainlinkClient {
         require(userRequests[_requestId] != address(0), "req not found");
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(userRequests[_requestId]), "Invalid user address");
-        ISkillWallet skillWallet = ISkillWallet(community.getSkillWalletAddress());
-        uint skillWalletId = skillWallet.getSkillWalletIdByOwner(userRequests[_requestId]);
-        Types.SkillSet memory skillSet = skillWallet.getSkillSet(skillWalletId);
-        partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], skillSet.skill1.level, _result, "");
+        partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
         supportedTokens = address (new SupportedTokens(true));
     }
 
