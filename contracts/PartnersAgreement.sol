@@ -6,18 +6,22 @@ import "./ISkillWallet.sol";
 import "./TokenDistribution.sol";
 import "./InteractionNFT.sol";
 import "./IDistributedTown.sol";
+import "./SupportedTokens.sol";
+import "./ProfitSharing.sol";
 
 contract PartnersAgreement {
     address partnersContract;
     address partnersInteractionNFTContract;
     address owner;
     address communityAddress;
+    address supportedTokens;
+    uint256 rolesCount;
     TokenDistribution treasury;
+    address public profitSharing;
 
     constructor(
         address _distributedTownAddress,
         address _partnersContract,
-        address _distributedToken,
         address _owner,
         address _communityAddress,
         uint _rolesCount,
@@ -30,6 +34,11 @@ contract PartnersAgreement {
         );
         owner = _owner;
         communityAddress = _communityAddress;
-        treasury = new TokenDistribution(_distributedToken, _rolesCount, "");
+        supportedTokens = address (new SupportedTokens(true));
+        rolesCount = _rolesCount;
+    }
+
+    function deployProfitSharing(uint256 _sharedProfit) public {
+        profitSharing = address(new ProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens));
     }
 }

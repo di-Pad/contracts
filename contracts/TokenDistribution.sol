@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./QuadraticDistribution.sol";
 import "./CommonTypes.sol";
+import "./ISupportedTokens.sol";
+import "./RoleDistributor.sol";
 
 contract TokenDistribution is ERC1155Burnable {
     using SafeMath for uint256;
@@ -17,17 +19,20 @@ contract TokenDistribution is ERC1155Burnable {
 
     address public partnersAgreement;
     address public distributedToken;
+    ISupportedTokens public supportedTokens;
     uint256 public rolesCount;
-    mapping (Types.Roles => address) public rolesContracts;
+    mapping (Types.Roles => address) public roleDistributors;
     mapping (Types.Roles => uint256[]) public userInteractions;
     mapping (Types.Roles => address[]) public rolesUsers;
     mapping (address => mapping(Types.Roles => userRoleId)) public userRoles;
     uint256 unclaimedDistribution = 0;
+    uint256 lastDistributionTimestamp = 0;
+    uint256 distributionPeriod;
 
-    constructor(address _distributedToken, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
+    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
         partnersAgreement = msg.sender;
         rolesCount = _rolesCount;
-        distributedToken = _distributedToken;        
+        supportedTokens = ISupportedTokens(_supportedTokens);        
     }
 
     function recordInteraction(uint256 _role, address _user) public {
@@ -45,9 +50,18 @@ contract TokenDistribution is ERC1155Burnable {
     }
 
     function distribute() public {
-        uint256 balance = IERC20(distributedToken).balanceOf(address(this));
-        uint256 fund = balance.sub(unclaimedDistribution);
-        unclaimedDistribution = balance;
+        require(block.timestamp >= lastDistributionTimestamp.add(distributionPeriod), "next period has not started yet");
+
+        //deploy role distributors
+        for (uint i = 0; i < rolesCount; i++) {
+            roleDistributors[Types.Roles(i)] = address(new RoleDistributor(
+                i, 
+                rolesUsers[Types.Roles(i)], 
+                userInteractions[Types.Roles(i)], 
+                supportedTokens
+            ));
+        }
+
         uint256[] memory unweigted = new uint256[](rolesCount);
 
         //get unweighted allocations
@@ -58,12 +72,34 @@ contract TokenDistribution is ERC1155Burnable {
         //get weights
         uint256[] memory weights = QuadraticDistribution.calcWeights(unweigted, rolesCount);
 
-        //get weighted allocations
-        uint256[] memory weighted = QuadraticDistribution.calcWeightedAlloc(fund, weights);
+        //mint role ERC1155 and distribute funds
+        bool mint1155 = true; //ERC1155 should be minted only once
+        bool hasFunds = false; //to know if there were any funds
 
-        //mint role NFTs
-        for (uint i = 0; i < rolesCount; i++) {
-            _mint(address(this),i, weighted[i], "");
+        for (uint i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            uint256 balance = IERC20(supportedTokens.supportedTokens(i)).balanceOf(address(this));
+            
+            if (balance > 0) {
+                hasFunds = true;
+
+                //get weighted allocations
+                uint256[] memory weighted = QuadraticDistribution.calcWeightedAlloc(balance, weights);
+            
+                for (uint j = 0; j < rolesCount; j++) {
+                    //mint ERC1155
+                    if (mint1155) {
+                        _mint(roleDistributors[Types.Roles(j)],j, weights[j], "");
+                        mint1155 = false;
+                    }
+
+                    //send tokens                    
+                    IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[Types.Roles(j)], weighted[j]);
+                }
+            }
         }
+
+        require(hasFunds, "no funds to distribute");
+
+        lastDistributionTimestamp = block.timestamp;
     }    
 }
