@@ -49,6 +49,7 @@ contract PartnersAgreement is ChainlinkClient {
         owner = _owner;
         communityAddress = _communityAddress;
         profitSharingFactory = IProfitSharingFactory(_profitSharingFactory);
+        supportedTokens = address (new SupportedTokens(true));
         
         setChainlinkToken(address(0));
         oracle = address(0);
@@ -104,7 +105,6 @@ contract PartnersAgreement is ChainlinkClient {
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(userRequests[_requestId]), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
-        supportedTokens = address (new SupportedTokens(true));
     }
 
     function deployProfitSharing(uint256 _sharedProfit) public {
