@@ -53,6 +53,18 @@ contract PartnersAgreement is ChainlinkClient {
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
+    function getAllMembers() public returns (address[] memory) {
+        // TODO - add getMembers function in community.
+        ICommunity community = ICommunity(communityAddress);
+        ISkillWallet skillWallet = ISkillWallet(community.getSkillWalletAddress());
+        uint[] memory members = community.getMembers();
+        address[] memory result;
+
+        for(uint index = 0; index < members.length; index ++ ) {
+            result[index] = skillWallet.ownerOf(members[index]);
+        }
+        return result;
+    }
 
     function getInteractions(
         address userAddress
