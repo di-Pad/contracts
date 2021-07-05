@@ -3256,26 +3256,6 @@ diffie-hellman@^5.0.0:
     miller-rabin "^4.0.0"
     randombytes "^2.0.0"
 
-distributed-town-smart-contracts@0.0.2-beta:
-  version "0.0.2-beta"
-  resolved "https://registry.yarnpkg.com/distributed-town-smart-contracts/-/distributed-town-smart-contracts-0.0.2-beta.tgz#3356cbb0820acf7d08d668e667ced9960e591e7c"
-  integrity sha512-WwA3KeCjqkVjPaAHRAxDilDf4b+FHC5R4pvgHTZaiZapDlwLraCevw81CbfVmP8RxDhRh0RGXrCJLa5t368hEg==
-  dependencies:
-    "@nomiclabs/hardhat-ethers" "^2.0.0"
-    "@nomiclabs/hardhat-etherscan" "^2.1.1"
-    "@nomiclabs/hardhat-waffle" "^2.0.0"
-    "@openzeppelin/contracts" "3.4.1"
-    "@tenderly/hardhat-tenderly" "^1.0.10"
-    chai "^4.2.0"
-    chalk "^4.1.0"
-    ethereum-waffle "^3.1.1"
-    ethers "^5.0.17"
-    hardhat "^2.0.11"
-    node-watch "^0.7.0"
-    qrcode-terminal "^0.12.0"
-    ramda "^0.27.1"
-    skill-wallet "0.0.3-beta"
-
 doctrine@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-3.0.0.tgz#addebead72a6574db783639dc87a121773973961"

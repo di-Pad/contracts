@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.4;
 
-import "skill-wallet/contracts/main/ISkillWallet.sol";
+import "./ISkillWallet.sol";
 
 import "./PartnersAgreement.sol";
 import "./IDistributedTown.sol";
@@ -26,6 +26,7 @@ contract PartnersRegistry {
         uint256 rolesCount,
         uint256 numberOfActions,
         address partnersContractAddress,
+        address _distributedToken,
         uint256 membersAllowed
     ) public {
         require(
@@ -49,6 +50,7 @@ contract PartnersRegistry {
             PartnersAgreement agreement = new PartnersAgreement(
                 address(distributedTown),
                 partnersContractAddress,
+                _distributedToken,
                 msg.sender,
                 communityAddress,
                 rolesCount,

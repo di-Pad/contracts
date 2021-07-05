@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.4;
 
-import "skill-wallet/contracts/main/ISkillWallet.sol";
+import "./ISkillWallet.sol";
 
-import "./Treasury.sol";
+import "./TokenDistribution.sol";
 import "./InteractionNFT.sol";
 import "./IDistributedTown.sol";
 
@@ -12,22 +12,24 @@ contract PartnersAgreement {
     address partnersInteractionNFTContract;
     address owner;
     address communityAddress;
-    Treasury treasury;
+    TokenDistribution treasury;
 
     constructor(
         address _distributedTownAddress,
         address _partnersContract,
+        address _distributedToken,
         address _owner,
         address _communityAddress,
         uint _rolesCount,
         uint _numberOfActions
     ) public {
+        require(_rolesCount == 2 || _rolesCount == 3, "Only 2 or 3 roles accepted");
         partnersContract = _partnersContract;
         partnersInteractionNFTContract = address(
             new InteractionNFT(_rolesCount, _numberOfActions)
         );
         owner = _owner;
         communityAddress = _communityAddress;
-        treasury = new Treasury();
+        treasury = new TokenDistribution(_distributedToken, _rolesCount, "");
     }
 }
