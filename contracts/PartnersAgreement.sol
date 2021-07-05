@@ -7,9 +7,9 @@ import "skill-wallet/contracts/main/ISkillWallet.sol";
 import "./InteractionNFT.sol";
 import "./IDistributedTown.sol";
 import "./SupportedTokens.sol";
-import "./TokenDistribution.sol";
+//import "./TokenDistribution.sol";
 import "./ICommunity.sol";
-import "./ProfitSharing.sol";
+import "./IProfitSharingFactory.sol";
 
 
 contract PartnersAgreement is ChainlinkClient {
@@ -19,11 +19,12 @@ contract PartnersAgreement is ChainlinkClient {
     address supportedTokens;
     uint256 rolesCount;
     address public profitSharing;
+    IProfitSharingFactory private profitSharingFactory;
 
     mapping(address => uint) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
 
-    TokenDistribution treasury;
+    //TokenDistribution treasury;
     InteractionNFT partnersInteractionNFTContract;
 
 
@@ -38,7 +39,8 @@ contract PartnersAgreement is ChainlinkClient {
         address _owner,
         address _communityAddress,
         uint _rolesCount,
-        uint _numberOfActions
+        uint _numberOfActions,
+        address _profitSharingFactory
     ) public {
         require(_rolesCount == 2 || _rolesCount == 3, "Only 2 or 3 roles accepted");
         rolesCount = _rolesCount;
@@ -46,6 +48,7 @@ contract PartnersAgreement is ChainlinkClient {
         partnersInteractionNFTContract = new InteractionNFT(_rolesCount, _numberOfActions);
         owner = _owner;
         communityAddress = _communityAddress;
+        profitSharingFactory = IProfitSharingFactory(_profitSharingFactory);
         
         setChainlinkToken(address(0));
         oracle = address(0);
@@ -105,6 +108,6 @@ contract PartnersAgreement is ChainlinkClient {
     }
 
     function deployProfitSharing(uint256 _sharedProfit) public {
-        profitSharing = address(new ProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens));
+        profitSharing = profitSharingFactory.deployProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens);
     }
 }

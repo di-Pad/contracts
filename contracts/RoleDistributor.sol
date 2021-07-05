@@ -1,17 +1,29 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.4;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-// import "./CommonTypes.sol";
 import "./TokenDistribution.sol";
 import "./ISupportedTokens.sol";
+
+import {
+    ISuperfluid,
+    ISuperToken,
+    ISuperAgreement
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol"; 
+
+import {
+    IConstantFlowAgreementV1
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 
 contract RoleDistributor is ERC1155Holder {
     using SafeMath for uint256;
     
     uint256 constant PRECISION = 1e6;
+    //TODO: parametrize this:
+    ISuperfluid constant HOST = ISuperfluid(0xEB796bdb90fFA0f28255275e16936D25d3418603);
+    IConstantFlowAgreementV1 constant CFA = IConstantFlowAgreementV1(0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873);
 
     uint256 public role;
     //uint256 public totalInteractions;
@@ -63,11 +75,27 @@ contract RoleDistributor is ERC1155Holder {
                     if (weights[j] > 0) {
                         uint256 amountToDistribute = weights[j].mul(balance).div(PRECISION);
                         //TODO: add superflow part here
-                        IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
+                        //IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
+                        _createStream(users[j], supportedTokens.supportedTokens(i), amountToDistribute);
                     }
                 }
             }
         }
+    }
+
+    function _createStream(address _receiver, address _token, uint256 _amount) internal {
+        HOST.callAgreement(
+            CFA,
+            abi.encodeWithSelector(
+                CFA.createFlow.selector,
+                ISuperToken(_token),
+                _receiver,
+                // uint256((_amount) / (7 / 24 / 3600)), 
+                uint256((25 * 1e18) / (15 / 24 / 3600)),
+                new bytes(0)
+            ),
+            "0x"
+        );
     }
 
 
