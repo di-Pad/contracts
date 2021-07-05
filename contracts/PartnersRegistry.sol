@@ -20,6 +20,10 @@ contract PartnersRegistry {
         distributedTown = IDistributedTown(distributedTownAddress);
     }
 
+    function getPartnerAgreementAddresses() public view returns(address[] memory) {
+        return agreements;
+    }
+
     function create(
         string memory metadata,
         uint256 template,

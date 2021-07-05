@@ -13,13 +13,15 @@ import "./IDistributedTown.sol";
 contract PartnersAgreement is ChainlinkClient {
     address public partnersContract;
     address owner;
-    address communityAddress;
+    address public communityAddress;
     uint lastBlockQueried;
 
     // Chainlink params
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
+    mapping(address => uint) lastBlockPerUserAddress;
+    mapping(bytes32 => address) userRequests;
 
     Treasury treasury;
     InteractionNFT partnersInteractionNFTContract;
@@ -53,11 +55,11 @@ contract PartnersAgreement is ChainlinkClient {
 
 
     function getInteractions(
-        address[] memory userAddresses
+        address userAddress
     ) public {
         require(
-            userAddresses.length > 0,
-            "UserAddresses list is empty!"
+            userAddress != address(0),
+            "No user address passed!"
         );
 
         Chainlink.Request memory req =
@@ -66,36 +68,29 @@ contract PartnersAgreement is ChainlinkClient {
                 address(this),
                 this.transferInteractionNFTs.selector
             );
-        req.addStringArray("userAddresses", getStringArray(userAddresses, userAddresses.length));
+        req.add("userAddress",string(abi.encodePacked(userAddress)) );
         req.add("contractAddress", string(abi.encodePacked(partnersContract)));
         req.add("chainId", "80001");
-        req.addUint("startBlock", lastBlockQueried);
+        req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
         req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
 
-        sendChainlinkRequestTo(oracle, req, fee);
+        bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
 
-        lastBlockQueried = block.number;
+        lastBlockPerUserAddress[userAddress] = block.number;
+        userRequests[reqId] = userAddress;
+
     }
 
-    function getStringArray(address[] memory arr, uint len) private pure returns(string[] memory) {
-        string[] memory res = new string[](len);
-        for(uint index = 0; index < len; index++) {
-            res[index] = string(abi.encodePacked(arr[index]));
-        }
-        return res;
-    }
-
-
-    function transferInteractionNFTs(bytes32 _requestId, UserInteractions[] calldata _result)
+    function transferInteractionNFTs(bytes32 _requestId, uint _result)
         public
         recordChainlinkFulfillment(_requestId)
     {
+        require(userRequests[_requestId] != address(0), "req not found");
         ICommunity community = ICommunity(communityAddress);
+        require(community.isMember(userRequests[_requestId]), "Invalid user address");
         ISkillWallet skillWallet = ISkillWallet(community.getSkillWalletAddress());
-        for(uint index = 0; index < _result.length; index++) {
-            uint skillWalletId = skillWallet.getSkillWalletIdByOwner(_result[index].userAddress);
-            Types.SkillSet memory skillSet = skillWallet.getSkillSet(skillWalletId);
-            partnersInteractionNFTContract.safeTransferFrom(address(this), _result[index].userAddress, skillSet.skill1.level, _result[index].transactionsCount, "");
-        }
+        uint skillWalletId = skillWallet.getSkillWalletIdByOwner(userRequests[_requestId]);
+        Types.SkillSet memory skillSet = skillWallet.getSkillSet(skillWalletId);
+        partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], skillSet.skill1.level, _result, "");
     }
 }
