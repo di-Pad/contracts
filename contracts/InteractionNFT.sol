@@ -1,6 +1,6 @@
 
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.4;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Burnable.sol";

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity ^0.7.4;
 
-import "skill-wallet/contracts/main/ISkillWallet.sol";
+import "./ISkillWallet.sol";
 
 import "./PartnersAgreement.sol";
 import "./IDistributedTown.sol";

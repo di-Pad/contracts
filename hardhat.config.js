@@ -69,20 +69,13 @@ module.exports = {
     maticTestnet: {
       url: 'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66',
       gasPrice: 1000000000,
-      accounts: ['']
+      accounts: {
+        mnemonic: mnemonic()
+      }
     }
   },
   solidity: {
     compilers: [
-      {
-        version: "0.7.4",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200
-          }
-        }
-      },
       {
         version: "0.7.4",
         settings: {
