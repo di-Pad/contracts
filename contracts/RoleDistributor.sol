@@ -32,9 +32,11 @@ contract RoleDistributor is ERC1155Holder {
     //mapping (address => uint256) userInteractions;
     address tokenDistribution;
     ISupportedTokens supportedTokens;
+    uint256 divider;
 
     constructor(
-        uint256 _role, 
+        uint256 _role,
+        uint256 _distributionPeriod,
         address[] memory _users, 
         uint256[] memory _userInteractions,
         ISupportedTokens _supportedTokens
@@ -44,6 +46,7 @@ contract RoleDistributor is ERC1155Holder {
         users = _users;
         supportedTokens = _supportedTokens;
         userInteractions = _userInteractions;
+        divider = (_distributionPeriod / 24 / 3600); //replace 7 with param (weekly/monthly)
     }
 
     //TODO: to add superflow integration to distribution    
@@ -90,8 +93,8 @@ contract RoleDistributor is ERC1155Holder {
                 CFA.createFlow.selector,
                 ISuperToken(_token),
                 _receiver,
-                // uint256((_amount) / (7 / 24 / 3600)), 
-                uint256((25 * 1e18) / (15 / 24 / 3600)),
+                uint256((_amount) / divider), 
+                //uint256((25 * 1e18) / (15 / 24 / 3600)),
                 new bytes(0)
             ),
             "0x"

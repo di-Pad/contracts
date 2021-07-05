@@ -28,7 +28,7 @@ contract TokenDistribution is ERC1155Burnable {
     mapping (address => mapping(RoleUtils.Roles => userRoleId)) public userRoles;
     uint256 unclaimedDistribution = 0;
     uint256 lastDistributionTimestamp = 0;
-    uint256 distributionPeriod;
+    uint256 distributionPeriod = 7 days; //TODO: populate with param 
 
     constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) public ERC1155(_uri) {
         partnersAgreement = msg.sender;
@@ -57,6 +57,7 @@ contract TokenDistribution is ERC1155Burnable {
         for (uint i = 0; i < rolesCount; i++) {
             roleDistributors[RoleUtils.Roles(i)] = address(new RoleDistributor(
                 i, 
+                distributionPeriod,
                 rolesUsers[RoleUtils.Roles(i)], 
                 userInteractions[RoleUtils.Roles(i)], 
                 supportedTokens
