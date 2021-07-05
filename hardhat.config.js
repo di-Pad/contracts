@@ -70,7 +70,7 @@ module.exports = {
       url: 'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66',
       gasPrice: 1000000000,
       accounts: {
-        mnemonic: mnemonic()
+        mnemonic: mnemonic(),
       }
     }
   },

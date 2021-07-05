@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./CommonTypes.sol";
+// import "./CommonTypes.sol";
 import "./TokenDistribution.sol";
 import "./ISupportedTokens.sol";
 
@@ -26,7 +26,7 @@ contract RoleDistributor is ERC1155Holder {
         address[] memory _users, 
         uint256[] memory _userInteractions,
         ISupportedTokens _supportedTokens
-    ) {
+    ) public {
         tokenDistribution = msg.sender;
         role = _role;
         users = _users;

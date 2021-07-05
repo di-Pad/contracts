@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+
 import "./QuadraticDistribution.sol";
-import "./CommonTypes.sol";
+import "./RoleUtils.sol";
 import "./ISupportedTokens.sol";
 import "./RoleDistributor.sol";
 
@@ -21,31 +22,31 @@ contract TokenDistribution is ERC1155Burnable {
     address public distributedToken;
     ISupportedTokens public supportedTokens;
     uint256 public rolesCount;
-    mapping (Types.Roles => address) public roleDistributors;
-    mapping (Types.Roles => uint256[]) public userInteractions;
-    mapping (Types.Roles => address[]) public rolesUsers;
-    mapping (address => mapping(Types.Roles => userRoleId)) public userRoles;
+    mapping (RoleUtils.Roles => address) public roleDistributors;
+    mapping (RoleUtils.Roles => uint256[]) public userInteractions;
+    mapping (RoleUtils.Roles => address[]) public rolesUsers;
+    mapping (address => mapping(RoleUtils.Roles => userRoleId)) public userRoles;
     uint256 unclaimedDistribution = 0;
     uint256 lastDistributionTimestamp = 0;
     uint256 distributionPeriod;
 
-    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
+    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) public ERC1155(_uri) {
         partnersAgreement = msg.sender;
         rolesCount = _rolesCount;
         supportedTokens = ISupportedTokens(_supportedTokens);        
     }
 
     function recordInteraction(uint256 _role, address _user) public {
-        userRoleId storage userRole = userRoles[_user][Types.Roles(_role)];
+        userRoleId storage userRole = userRoles[_user][RoleUtils.Roles(_role)];
 
         if (!userRole.hasRole) {
             userRole.hasRole = true;
-            userRole.id = rolesUsers[Types.Roles(_role)].length;
-            rolesUsers[Types.Roles(_role)].push(_user);
-            userInteractions[Types.Roles(_role)].push(1);
+            userRole.id = rolesUsers[RoleUtils.Roles(_role)].length;
+            rolesUsers[RoleUtils.Roles(_role)].push(_user);
+            userInteractions[RoleUtils.Roles(_role)].push(1);
         } else {
             uint256 id = userRole.id;
-            userInteractions[Types.Roles(_role)][id] = userInteractions[Types.Roles(_role)][id].add(1);
+            userInteractions[RoleUtils.Roles(_role)][id] = userInteractions[RoleUtils.Roles(_role)][id].add(1);
         }
     }
 
@@ -54,10 +55,10 @@ contract TokenDistribution is ERC1155Burnable {
 
         //deploy role distributors
         for (uint i = 0; i < rolesCount; i++) {
-            roleDistributors[Types.Roles(i)] = address(new RoleDistributor(
+            roleDistributors[RoleUtils.Roles(i)] = address(new RoleDistributor(
                 i, 
-                rolesUsers[Types.Roles(i)], 
-                userInteractions[Types.Roles(i)], 
+                rolesUsers[RoleUtils.Roles(i)], 
+                userInteractions[RoleUtils.Roles(i)], 
                 supportedTokens
             ));
         }
@@ -66,7 +67,7 @@ contract TokenDistribution is ERC1155Burnable {
 
         //get unweighted allocations
         for (uint i = 0; i < rolesCount; i++) {
-            unweigted[i] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[Types.Roles(i)]);
+            unweigted[i] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[RoleUtils.Roles(i)]);
         }
 
         //get weights
@@ -88,12 +89,12 @@ contract TokenDistribution is ERC1155Burnable {
                 for (uint j = 0; j < rolesCount; j++) {
                     //mint ERC1155
                     if (mint1155) {
-                        _mint(roleDistributors[Types.Roles(j)],j, weights[j], "");
+                        _mint(roleDistributors[RoleUtils.Roles(j)],j, weights[j], "");
                         mint1155 = false;
                     }
 
                     //send tokens                    
-                    IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[Types.Roles(j)], weighted[j]);
+                    IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[RoleUtils.Roles(j)], weighted[j]);
                 }
             }
         }

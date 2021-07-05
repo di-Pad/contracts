@@ -1,11 +1,16 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.6.10;
 
 library RoleUtils {
     uint256 constant role1 = 57;
     uint256 constant role2 = 29;
     uint256 constant role3 = 14;
 
+    enum Roles {
+        ROLE1,
+        ROLE2,
+        ROLE3
+    }
 
     function getRolesCoefs(uint256 _roleNum) public pure returns (uint256[3] memory) {
         if (_roleNum == 2) {

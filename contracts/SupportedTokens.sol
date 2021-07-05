@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.6.10;
 
 import "./DefaultSupportedTokens.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -10,7 +10,7 @@ contract SupportedTokens is Ownable {
     mapping (address => bool) public isTokenSupported;
     mapping (address => uint256) private supportedTokenId;
 
-    constructor(bool _addDefaults) {    
+    constructor(bool _addDefaults) public {    
         if(_addDefaults) {
             supportedTokens = DefaultSupportedTokens.getSupportedTokes();
         }

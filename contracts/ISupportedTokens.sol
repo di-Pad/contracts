@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.6.10;
 
 interface ISupportedTokens {
     function supportedTokens(uint256) external view returns (address);

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
+pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -16,7 +16,7 @@ contract ProfitSharing {
     uint256 public sharedProfit; //in percent
     ISupportedTokens public supportedTokens;
 
-    constructor(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) {
+    constructor(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) public {
         require(sharedProfit < 100, "Shared profit > 100");
         require(_partner != address(0), "no partner address");
 

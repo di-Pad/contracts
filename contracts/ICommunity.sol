@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.6.10;
 
 /**
  * @title DistributedTown Community
@@ -33,6 +32,8 @@ interface ICommunity {
 
     function leave(address memberAddress) external;
 
+    function isMember(address memberAddress) external view returns(bool);
+    
     function getMembers() external view returns (uint256[] memory);
 
     // TODO: check called only by milestones!
@@ -58,5 +59,5 @@ interface ICommunity {
 
     function transferCredits(address to, uint256 amount) external;
 
-    function getSkillWalletAddress() external returns(address);
+    function getSkillWalletAddress() external view returns(address);
 }

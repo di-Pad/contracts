@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.4;
-
-import "./ISkillWallet.sol";
+pragma solidity ^0.6.10;
 
 import "./PartnersAgreement.sol";
 import "./IDistributedTown.sol";
 import "./ICommunity.sol";
+
+import "skill-wallet/contracts/main/ISkillWallet.sol";
 
 contract PartnersRegistry {
 
@@ -18,6 +18,10 @@ contract PartnersRegistry {
 
     constructor(address distributedTownAddress) public {
         distributedTown = IDistributedTown(distributedTownAddress);
+    }
+
+    function getPartnerAgreementAddresses() public view returns(address[] memory) {
+        return agreements;
     }
 
     function create(
