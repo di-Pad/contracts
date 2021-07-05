@@ -1,35 +1,35 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
-pragma experimental ABIEncoderV2;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
-import "skill-wallet/contracts/main/ISkillWallet.sol";
 
-import "./Treasury.sol";
+import "./ISkillWallet.sol";
+import "./TokenDistribution.sol";
 import "./InteractionNFT.sol";
 import "./ICommunity.sol";
 import "./IDistributedTown.sol";
+import "./SupportedTokens.sol";
+import "./ProfitSharing.sol";
 
 contract PartnersAgreement is ChainlinkClient {
-    address public partnersContract;
-    address owner;
+    address public owner;
     address public communityAddress;
-    uint lastBlockQueried;
+    address public partnersContract;
+    address supportedTokens;
+    uint256 rolesCount;
+    address public profitSharing;
+
+    mapping(address => uint) lastBlockPerUserAddress;
+    mapping(bytes32 => address) userRequests;
+
+    TokenDistribution treasury;
+    InteractionNFT partnersInteractionNFTContract;
+
 
     // Chainlink params
     address private oracle;
     bytes32 private jobId;
     uint256 private fee;
-    mapping(address => uint) lastBlockPerUserAddress;
-    mapping(bytes32 => address) userRequests;
-
-    Treasury treasury;
-    InteractionNFT partnersInteractionNFTContract;
-
-    struct UserInteractions {
-        address userAddress;
-        uint transactionsCount;
-    }
 
     constructor(
         address _distributedTownAddress,
@@ -39,13 +39,12 @@ contract PartnersAgreement is ChainlinkClient {
         uint _rolesCount,
         uint _numberOfActions
     ) public {
-        lastBlockQueried = 0;
-
+        require(_rolesCount == 2 || _rolesCount == 3, "Only 2 or 3 roles accepted");
+        rolesCount = _rolesCount;
         partnersContract = _partnersContract;
         partnersInteractionNFTContract = new InteractionNFT(_rolesCount, _numberOfActions);
         owner = _owner;
         communityAddress = _communityAddress;
-        treasury = new Treasury();
         
         setChainlinkToken(address(0));
         oracle = address(0);
@@ -104,5 +103,10 @@ contract PartnersAgreement is ChainlinkClient {
         uint skillWalletId = skillWallet.getSkillWalletIdByOwner(userRequests[_requestId]);
         Types.SkillSet memory skillSet = skillWallet.getSkillSet(skillWalletId);
         partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], skillSet.skill1.level, _result, "");
+        supportedTokens = address (new SupportedTokens(true));
+    }
+
+    function deployProfitSharing(uint256 _sharedProfit) public {
+        profitSharing = address(new ProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens));
     }
 }
