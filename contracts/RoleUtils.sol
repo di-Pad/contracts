@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.10;
+pragma solidity >=0.6.0 <0.8.0;
 
 library RoleUtils {
     uint256 constant role1 = 57;
