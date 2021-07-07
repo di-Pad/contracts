@@ -26,7 +26,7 @@ We make it a 2-step process for each decentralized protocol to kick-off an autom
 - [**Contracts**](https://github.com/di-Pad/contracts)
 - [**Interactions Query API**](https://github.com/di-Pad/interactions-query-api)
 - [**Interactions CRON Job**](https://github.com/di-Pad/interactions-cron-job)
-- - [**Frontend**](https://github.com/di-Pad/d-pad-cafe-frontend)
+- [**Frontend**](https://github.com/di-Pad/d-pad-cafe-frontend)
 
 # Links & Contacts:
 - [d-Pad Café @ HackMoney](https://www.youtube.com/watch?v=jEqAWZM5HsE)
