@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 contract PartnersVault {
     address public profitSharingContract;
 
-    constructor() public {
+    constructor() {
         profitSharingContract = msg.sender;
     }
 

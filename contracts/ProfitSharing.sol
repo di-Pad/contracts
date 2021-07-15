@@ -16,7 +16,7 @@ contract ProfitSharing {
     uint256 public sharedProfit; //in percent
     ISupportedTokens public supportedTokens;
 
-    constructor(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) public {
+    constructor(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) {
         require(sharedProfit < 100, "Shared profit > 100");
         require(_partner != address(0), "no partner address");
 
@@ -59,7 +59,7 @@ contract ProfitSharing {
         }
     }
 
-    function retreiveUnsupportedToken(address _token, address _to) public {
+    function retrieveUnsupportedToken(address _token, address _to) public {
         require(msg.sender == partner, "not partner");
         require(!supportedTokens.isTokenSupported(_token), "token is supported");
 

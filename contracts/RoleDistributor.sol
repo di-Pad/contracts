@@ -40,7 +40,7 @@ contract RoleDistributor is ERC1155Holder {
         address[] memory _users, 
         uint256[] memory _userInteractions,
         ISupportedTokens _supportedTokens
-    ) public {
+    ) {
         tokenDistribution = msg.sender;
         role = _role;
         users = _users;
@@ -77,9 +77,9 @@ contract RoleDistributor is ERC1155Holder {
                     }
                     if (weights[j] > 0) {
                         uint256 amountToDistribute = weights[j].mul(balance).div(PRECISION);
-                        //TODO: add superflow part here
-                        //IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
-                        _createStream(users[j], supportedTokens.supportedTokens(i), amountToDistribute);
+                        //for testing tokens are sent to users without creating a flow. To be removed after testing
+                        IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
+                        //_createStream(users[j], supportedTokens.supportedTokens(i), amountToDistribute);
                     }
                 }
             }

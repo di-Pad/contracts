@@ -30,7 +30,9 @@ contract TokenDistribution is ERC1155Burnable {
     uint256 lastDistributionTimestamp = 0;
     uint256 distributionPeriod = 7 days; //TODO: populate with param 
 
-    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) public ERC1155(_uri) {
+    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
+        require (_rolesCount == 2 || _rolesCount == 3, "Roles count is not 2 or 3");
+        
         partnersAgreement = msg.sender;
         rolesCount = _rolesCount;
         supportedTokens = ISupportedTokens(_supportedTokens);        
