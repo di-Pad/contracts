@@ -74,7 +74,7 @@ contract PartnersAgreement is ChainlinkClient {
         return result;
     }
 
-    function getInteractions(
+    function queryForNewInteractions(
         address userAddress
     ) public {
         require(
@@ -112,6 +112,10 @@ contract PartnersAgreement is ChainlinkClient {
         //TODO: maybe add record interactions!
     }
 
+    function getInteractionNFT(address user) public view returns(uint) {
+        return partnersInteractionNFTContract.getActiveInteractions(user);
+    }
+    
     // TODO: ensure that there's one profit sharing per agreement
     function deployProfitSharing(uint256 _sharedProfit) public {
         supportedTokens = address (new SupportedTokens(true));
