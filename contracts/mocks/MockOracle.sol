@@ -113,12 +113,12 @@ contract MockOracle is ChainlinkRequestInterface, LinkTokenReceiver {
    * Will call the callback address' callback function without bubbling up error
    * checking in a `require` so that the node can get paid.
    * @param _requestId The fulfillment request ID that must match the requester's
-   * @param _isValid The data to return to the consuming contract
+   * @param _res The data to return to the consuming contract
    * @return Status if the external call was successful
    */
   function fulfillOracleRequest(
     bytes32 _requestId,
-    bool _isValid
+    uint _res
   )
     external
     isValidRequest(_requestId)
@@ -130,7 +130,7 @@ contract MockOracle is ChainlinkRequestInterface, LinkTokenReceiver {
     // All updates to the oracle's fulfillment should come before calling the
     // callback(addr+functionId) as it is untrusted.
     // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    (bool success, ) = req.callbackAddr.call(abi.encodeWithSelector(req.callbackFunctionId, _requestId, _isValid)); // solhint-disable-line avoid-low-level-calls
+    (bool success, ) = req.callbackAddr.call(abi.encodeWithSelector(req.callbackFunctionId, _requestId, _res)); // solhint-disable-line avoid-low-level-calls
     emit CallbackCalled(_requestId);
     return success;
   }
