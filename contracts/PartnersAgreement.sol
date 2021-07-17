@@ -109,6 +109,7 @@ contract PartnersAgreement is ChainlinkClient {
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(userRequests[_requestId]), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
+        //TODO: maybe add record interactions!
     }
 
     // TODO: ensure that there's one profit sharing per agreement
