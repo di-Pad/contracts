@@ -70,7 +70,7 @@ contract PartnersAgreement is ChainlinkClient {
         return result;
     }
 
-    function getInteractions(
+    function queryForNewInteractions(
         address userAddress
     ) public {
         require(
@@ -105,6 +105,10 @@ contract PartnersAgreement is ChainlinkClient {
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(userRequests[_requestId]), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
+    }
+
+    function getInteractionNFT(address user) public view returns(uint) {
+        return partnersInteractionNFTContract.getActiveInteractions(user);
     }
 
     function deployProfitSharing(uint256 _sharedProfit) public {
