@@ -11,7 +11,6 @@ const MockOracle = artifacts.require('MockOracle');
 const PartnersAgreement = artifacts.require('PartnersAgreement');
 const DefaultSupportedTokens = artifacts.require('DefaultSupportedTokens');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
-const InteractionNFT = artifacts.require('InteractionNFT');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 var BN = web3.utils.BN;
 
@@ -41,9 +40,6 @@ contract('PartnersAgreement', function (accounts) {
       this.linkTokenMock.address,
       { from: accounts[0] }
     );
-
-    const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
-    this.interactionNFT = await InteractionNFT.at(interactionNFTAddress);
 
     await this.linkTokenMock.transfer(
       this.partnersAgreement.address,
