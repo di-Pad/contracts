@@ -41,6 +41,7 @@ yarn-error.log*
 .idea
 .env
 mnemonic.txt
+0x*.txt
 /build
 /deployments
 /artifacts
