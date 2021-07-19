@@ -3,9 +3,9 @@ pragma solidity ^0.6.10;
 
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "skill-wallet/contracts/main/ISkillWallet.sol";
+import "skill-wallet/contracts/main/SkillWallet.sol";
 
 import "./InteractionNFT.sol";
-import "./IDistributedTown.sol";
 import "./SupportedTokens.sol";
 //import "./TokenDistribution.sol";
 import "./ICommunity.sol";
@@ -34,13 +34,14 @@ contract PartnersAgreement is ChainlinkClient {
     uint256 private fee;
 
     constructor(
-        address _distributedTownAddress,
         address _partnersContract,
         address _owner,
         address _communityAddress,
         uint _rolesCount,
         uint _numberOfActions,
-        address _profitSharingFactory
+        address _profitSharingFactory,
+        address _oracle,
+        address _chainlinkToken
     ) public {
         require(_rolesCount == 2 || _rolesCount == 3, "Only 2 or 3 roles accepted");
         rolesCount = _rolesCount;
@@ -49,14 +50,17 @@ contract PartnersAgreement is ChainlinkClient {
         owner = _owner;
         communityAddress = _communityAddress;
         profitSharingFactory = IProfitSharingFactory(_profitSharingFactory);
-        supportedTokens = address (new SupportedTokens(true));
         
-        setChainlinkToken(address(0));
-        oracle = address(0);
+        setChainlinkToken(_chainlinkToken);
+        oracle = _oracle;
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
+    function getInteractionNFTContractAddress() public view returns(address) {
+        return address(partnersInteractionNFTContract);
+    }
+    
     function getAllMembers() public view returns (address[] memory) {
         // TODO - add getMembers function in community.
         ICommunity community = ICommunity(communityAddress);
@@ -70,7 +74,7 @@ contract PartnersAgreement is ChainlinkClient {
         return result;
     }
 
-    function getInteractions(
+    function queryForNewInteractions(
         address userAddress
     ) public {
         require(
@@ -105,9 +109,16 @@ contract PartnersAgreement is ChainlinkClient {
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(userRequests[_requestId]), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
+        //TODO: maybe add record interactions!
     }
 
+    function getInteractionNFT(address user) public view returns(uint) {
+        return partnersInteractionNFTContract.getActiveInteractions(user);
+    }
+    
+    // TODO: ensure that there's one profit sharing per agreement
     function deployProfitSharing(uint256 _sharedProfit) public {
+        supportedTokens = address (new SupportedTokens(true));
         profitSharing = profitSharingFactory.deployProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens);
     }
 }

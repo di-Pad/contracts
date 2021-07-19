@@ -16,10 +16,15 @@ contract PartnersRegistry {
     IDistributedTown distributedTown;
     address[] agreements;
     address private profitSharingFactory;
+    address oracle;
+    address linkToken;
 
-    constructor(address distributedTownAddress, address _profitSharingFactory) public {
-        distributedTown = IDistributedTown(distributedTownAddress);
+    constructor(address _distributedTownAddress, address _profitSharingFactory,
+    address _oracle, address _linkToken) public {
+        distributedTown = IDistributedTown(_distributedTownAddress);
         profitSharingFactory = _profitSharingFactory;
+        oracle = _oracle;
+        linkToken = _linkToken;
     }
 
     function getPartnerAgreementAddresses() public view returns(address[] memory) {
@@ -53,13 +58,14 @@ contract PartnersRegistry {
             uint256 credits;
 
             PartnersAgreement agreement = new PartnersAgreement(
-                address(distributedTown),
                 partnersContractAddress,
                 msg.sender,
                 communityAddress,
                 rolesCount,
                 numberOfActions,
-                profitSharingFactory
+                profitSharingFactory,
+                oracle,
+                linkToken
             );
             agreements.push(address(agreement));
 

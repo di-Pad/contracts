@@ -46,6 +46,7 @@ contract InteractionNFT is ERC1155Burnable {
 
     }
 
+    //TODO: call from token distribution, once there are funds distributed for a certain amount of interactions
     function markAsInactive(address owner, uint amount) public {
         require(owner != address(0), "no owner passed");
         require(amount >= balanceOf(owner, userRoles[owner]));
