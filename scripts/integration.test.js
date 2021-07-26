@@ -1,4 +1,4 @@
-const partnersRegistryAddress = '0x002429B79191cfeB6f0ce16B682A823c3D5e9631'
+const partnersRegistryAddress = '0x5dA76c9aa48CD9b3c286EE702659d05804b13545'
 const distributedTownAddress = '0x064C1E789B9a3FfCe8112630cCf6e2de082Dd7A7'
 // const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
 // const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
@@ -43,7 +43,9 @@ const ditoContract = new ethers.Contract(
 
 async function setPartnersRegistryAddress() {
   const createTx = await ditoContract.setPartnersRegistryAddress(
-    partnersRegistryAddress
+    partnersRegistryAddress,
+    { gasPrice: 1000000000, gasLimit: 85000 }
+
     )
   const res = await createTx.wait()
   console.log(res)
