@@ -6,11 +6,15 @@ const { deploy } = require("./utils")
 const main = async () => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
-    const distributedTownAddress = "0xc91be9B71A1f0e79393898b9263cb77eF7682D79";
+    const distributedTownAddress = "0x064C1E789B9a3FfCe8112630cCf6e2de082Dd7A7";
 
     console.log("\n\n 📡 Deploying...\n");
+    const defaultSupportedTokens = await deploy('DefaultSupportedTokens', []);
+    await defaultSupportedTokens.deployed();
 
-    const partnersRegistry = await deploy("PartnersRegistry", [distributedTownAddress]);
+    const partnersRegistry = await deploy("PartnersRegistry", [distributedTownAddress, distributedTownAddress, distributedTownAddress, distributedTownAddress], {}, {
+        DefaultSupportedTokens: defaultSupportedTokens.address
+    });
     await partnersRegistry.deployed();
 
     console.log(
