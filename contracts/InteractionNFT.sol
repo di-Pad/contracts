@@ -2,10 +2,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.10;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155Burnable.sol";
+import "./ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract InteractionNFT is ERC1155Burnable {
+contract InteractionNFT is ERC1155Supply {
     using Counters for Counters.Counter;
     Counters.Counter interactionId;
 
@@ -17,6 +17,7 @@ contract InteractionNFT is ERC1155Burnable {
     uint public constant ROLE3 = 2;
 
     mapping(address => uint) public userRoles;
+    mapping(uint => address[]) public usersPerRole;
 
     mapping(address => uint) inactiveInteractions;
 
@@ -41,6 +42,7 @@ contract InteractionNFT is ERC1155Burnable {
         require(role >= 0 && role <= 2, "Invalid role!");
 
         userRoles[user] = role;
+        usersPerRole[role].push(user);
 
         emit UserRoleAssigned();
 
@@ -68,5 +70,9 @@ contract InteractionNFT is ERC1155Burnable {
         roles[1] = 1;
         roles[2] = 2;
         return roles;
+    }
+
+    function getUsersPerRole(uint role) view public returns(address[] memory) {
+        return usersPerRole[role];
     }
 }

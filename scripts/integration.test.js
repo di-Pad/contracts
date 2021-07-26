@@ -44,9 +44,7 @@ const ditoContract = new ethers.Contract(
 async function setPartnersRegistryAddress() {
   const createTx = await ditoContract.setPartnersRegistryAddress(
     partnersRegistryAddress
-    // { gasPrice: 100000000, gasLimit: 85000 }
-
-  )
+    )
   const res = await createTx.wait()
   console.log(res)
 }
