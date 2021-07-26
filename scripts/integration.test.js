@@ -1,5 +1,5 @@
-const partnersRegistryAddress = '0x68565f98f7d565A3019ED6EB5dA921156Ff7ab10'
-const distributedTownAddress = '0xc91be9B71A1f0e79393898b9263cb77eF7682D79'
+const partnersRegistryAddress = '0x823C547BF1eacd327890E5C6F5c04A0021c1682C'
+const distributedTownAddress = '0x7cf5C54b06410B4051460cc5E24aC352230B198b'
 // const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
 // const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
 const { assert } = require('chai')
@@ -12,20 +12,23 @@ var partnersAgreementAbi = require('../artifacts/contracts/PartnersAgreement.sol
 var distributedTownAbi = require('../artifacts/contracts/IDistributedTown.sol/IDistributedTown.json')
   .abi
 
-// const userAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
-// function mnemonic() {
-//   return 'close gesture fatal vacant time toy general horror payment visit case you'
-// }
+const userAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
+function mnemonic() {
+  return 'close gesture fatal vacant time toy general horror payment visit case you'
+}
 
 const provider = new ethers.providers.JsonRpcProvider(
-  'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
+  // 'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
   
 
-  // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
+  'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
 )
 
 // Wallet connected to a provider
-const senderWalletMnemonic = new ethers.Wallet('privKey')
+const senderWalletMnemonic = ethers.Wallet.fromMnemonic(
+  mnemonic(),
+  "m/44'/60'/0'/0/0"
+);
 
 let signer = senderWalletMnemonic.connect(provider)
 
@@ -43,8 +46,8 @@ const ditoContract = new ethers.Contract(
 
 async function setPartnersRegistryAddress() {
   const createTx = await ditoContract.setPartnersRegistryAddress(
-    partnersRegistryAddress,
-  )
+    partnersRegistryAddress
+    )
   const res = await createTx.wait()
   console.log(res)
 }
@@ -74,8 +77,8 @@ async function createPartnersAgreement() {
 }
 
 async function test() {
-  // await setPartnersRegistryAddress();
-  await createPartnersAgreement()
+  await setPartnersRegistryAddress();
+  // await createPartnersAgreement()
 }
 
 test()
