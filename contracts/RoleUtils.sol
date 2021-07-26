@@ -7,6 +7,7 @@ library RoleUtils {
     uint256 constant role3 = 14;
 
     enum Roles {
+        NONE,
         ROLE1,
         ROLE2,
         ROLE3

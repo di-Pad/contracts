@@ -115,7 +115,7 @@ contract("RoleDistributor", (accounts) => {
         for (let i = 0; i < interactions.length; i++) {
             for (let j = 0; j < interactions[i].length; j++) {
                 for (let k = 0; k < interactions[i][j]; k++) {
-                    await tokenDistribution.recordInteraction(i, rolesUsers[i][j]);
+                    await tokenDistribution.recordInteraction(i + 1, rolesUsers[i][j]);
                 }          
             }
         }
@@ -124,7 +124,7 @@ contract("RoleDistributor", (accounts) => {
         await tokenDistribution.distribute();
 
         for (let i = 0; i < rolesUsers.length; i++) {
-            roleDistributors.push(await ethers.getContractAt("RoleDistributor", await tokenDistribution.roleDistributors(i)));
+            roleDistributors.push(await ethers.getContractAt("RoleDistributor", await tokenDistribution.roleDistributors(i + 1)));
         } 
     });
 
