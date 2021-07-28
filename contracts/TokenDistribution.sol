@@ -22,6 +22,7 @@ contract TokenDistribution is ERC1155Burnable {
     struct User {
         uint256 id;
         RoleUtils.Roles role;
+        uint256 lastCycle; // to check if user was already used and id updated in current cycle
     }
 
     address public partnersAgreement;
@@ -34,7 +35,8 @@ contract TokenDistribution is ERC1155Burnable {
     mapping (address => User) public users;
     uint256 unclaimedDistribution = 0;
     uint256 lastDistributionTimestamp = 0;
-    uint256 distributionPeriod = 7 days; //TODO: populate with param 
+    uint256 distributionPeriod = 7 days; //TODO: populate with param
+    uint256 cycle = 1;
 
     constructor(address _partnersAgreement, address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
         require (_rolesCount == 2 || _rolesCount == 3, "Roles count is not 2 or 3");
@@ -47,12 +49,13 @@ contract TokenDistribution is ERC1155Burnable {
     function recordInteraction(address _user, uint256 _amount) public {
         User memory user = users[_user];
 
-        if (user.role == RoleUtils.Roles.NONE) {
+        if (user.role == RoleUtils.Roles.NONE || user.lastCycle < cycle) {
             RoleUtils.Roles role = RoleUtils.Roles(IPartnersAgreementInteractions(partnersAgreement).getUserRole(_user));
             require(role != RoleUtils.Roles.NONE, "no role");
             
             user.role = role;
             user.id = rolesUsers[role].length;
+            user.lastCycle = cycle;
             users[_user] = user;
             rolesUsers[role].push(_user);
             userInteractions[role].push(_amount);
@@ -85,8 +88,12 @@ contract TokenDistribution is ERC1155Burnable {
         uint256[] memory unweigted = new uint256[](rolesCount);
 
         //get unweighted allocations
-        for (uint i = 0; i < rolesCount; i++) {
-            unweigted[i] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[RoleUtils.Roles(i + 1)]);
+        for (uint i = 1; i <= rolesCount; i++) {
+            unweigted[i - 1] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[RoleUtils.Roles(i)]);
+            
+            //cleanup
+            delete userInteractions[RoleUtils.Roles(i)];
+            delete rolesUsers[RoleUtils.Roles(i)];
         }
 
         //get weights
@@ -121,6 +128,7 @@ contract TokenDistribution is ERC1155Burnable {
         require(hasFunds, "no funds to distribute");
 
         lastDistributionTimestamp = block.timestamp;
+        cycle++; //no risk of overflow here
     }
 
     function _getUsers() internal view {

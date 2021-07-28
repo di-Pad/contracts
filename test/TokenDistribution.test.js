@@ -133,7 +133,7 @@ contract("TokenDistribution", (accounts) => {
 
         //send some tokens to profit sharing contract and share them
         const GenericERC20 = await ethers.getContractFactory("GenericERC20");
-        supportedToken = await GenericERC20.deploy("100000".concat(e18),"Supported", "SPRT");
+        supportedToken = await GenericERC20.deploy("1000000".concat(e18),"Supported", "SPRT");
         await supportedTokens.addSupportedToken(supportedToken.address);
         await supportedToken.transfer(profitSharing.address,"50000".concat(e18));
         await profitSharing.splitAllProfits();
@@ -142,7 +142,6 @@ contract("TokenDistribution", (accounts) => {
         const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
         const interactionNFTContract = await ethers.getContractAt("InteractionNFT", interactionNFTAddress);
 
-        //TODO: replace with actual interactions once they are integrated
         for (let i = 0; i < interactions.length; i++) {
             for (let j = 0; j < interactions[i].length; j++) {
                 await interactionNFTContract.addUserToRole(rolesUsers[i][j], i + 1);
@@ -171,7 +170,7 @@ contract("TokenDistribution", (accounts) => {
     });
 
     describe("Token Distibution", async () => {
-        it("Should distribute distribute tokens to roles contract", async () => {
+        it("Should distribute tokens to roles contract", async () => {
             await tokenDistribution.distribute();
 
             for (let i = 0; i < rolesUsers.length; i++) {
@@ -181,7 +180,55 @@ contract("TokenDistribution", (accounts) => {
 
                 //console.log(roleDistributors[i], String(await supportedToken.balanceOf(roleDistributors[i])));
                 expect(await supportedToken.balanceOf(roleDistributors[i])).to.equal(expectedResult[i]);
-            }            
+            }
+            
+            expect(await supportedToken.balanceOf(tokenDistribution.address)).to.equal("0");
+        });
+
+        it("Should not allow another distribution before end of the cycle", async () => {
+            await supportedToken.transfer(profitSharing.address,"50000".concat(e18));
+            await profitSharing.splitAllProfits();
+
+            for (let i = 0; i < interactions.length; i++) {
+                for (let j = 0; j < interactions[i].length; j++) {    
+                    const tx = await partnersAgreement.queryForNewInteractions(
+                        rolesUsers[i][j]
+                    );
+    
+                    const events = (await tx.wait()).events?.filter((e) => {
+                        return e.event == "ChainlinkRequested"
+                    });
+    
+                    await mockOracle.fulfillOracleRequest(
+                        events[0].args.id,
+                        interactions[i][j]
+                    );               
+                }
+            }
+
+            expect(tokenDistribution.distribute()).to.be.revertedWith("next period has not started yet");
+        });
+
+        it("Should allow to deploy new role contracts and distribute to them once new period started", async () => {
+            await hre.network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
+            await hre.network.provider.send("evm_mine");
+
+            await tokenDistribution.distribute();
+
+            let newRoleDistributors = [];
+
+            for (let i = 0; i < rolesUsers.length; i++) {
+                newRoleDistributors.push(await tokenDistribution.roleDistributors(i + 1));
+
+                expect(await newRoleDistributors[i]).not.to.equal(ZERO_ADDRESS);
+                expect(await newRoleDistributors[i]).not.to.equal(roleDistributors[i]);
+
+                //console.log(roleDistributors[i], String(await supportedToken.balanceOf(roleDistributors[i])));
+                //console.log(newRoleDistributors[i], String(await supportedToken.balanceOf(newRoleDistributors[i])));
+                expect(await supportedToken.balanceOf(newRoleDistributors[i])).to.equal(expectedResult[i]);
+            }
+            
+            expect(await supportedToken.balanceOf(tokenDistribution.address)).to.equal("0");
         });
     });
 });
