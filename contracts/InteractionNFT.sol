@@ -4,42 +4,42 @@ pragma solidity ^0.6.10;
 
 import "./ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./RoleUtils.sol";
 
 contract InteractionNFT is ERC1155Supply {
     using Counters for Counters.Counter;
+    using SafeMath for uint256;
     Counters.Counter interactionId;
 
     event MarkedAsInactive();
     event UserRoleAssigned();
 
-    uint public constant ROLE1 = 0;
-    uint public constant ROLE2 = 1;
-    uint public constant ROLE3 = 2;
-
-    mapping(address => uint) public userRoles;
-    mapping(uint => address[]) public usersPerRole;
+    mapping(address => RoleUtils.Roles) public userRoles;
+    mapping(RoleUtils.Roles => address[]) public usersPerRole;
 
     mapping(address => uint) inactiveInteractions;
 
     constructor(uint rolesCount, uint totalSupply) public ERC1155('') {
-        if(rolesCount == 2) {
-            uint role2Tokens = totalSupply * 43/100;
-            uint role1Tokens = totalSupply - role2Tokens;
-            _mint(msg.sender, ROLE1, role1Tokens, "");
-            _mint(msg.sender, ROLE2, role2Tokens, "");
-        } else {
-            uint role2Tokens = totalSupply * 29/100;
-            uint role3Tokens = totalSupply * 14/100;
-            uint role1Tokens = totalSupply - role2Tokens - role3Tokens;
-            _mint(msg.sender, ROLE1, role1Tokens, "");
-            _mint(msg.sender, ROLE2, role2Tokens, "");
-            _mint(msg.sender, ROLE3, role3Tokens, "");
+        require(rolesCount == 2 || rolesCount == 3, "Invalid roles count!");
+
+        uint256[3] memory roleCoefs = RoleUtils.getRolesCoefs(rolesCount);
+        uint256 supplied = 0;
+
+        for(uint256 i = 1; i <= rolesCount; i++) {
+            uint256 roleTokens = totalSupply.mul(roleCoefs[i - 1]).div(100);
+            _mint(msg.sender, i, roleTokens, "");
+            supplied = supplied.add(roleTokens);
+        }
+
+        if (supplied < totalSupply) {
+            _mint(msg.sender, rolesCount, totalSupply - supplied, "");
         }
     }
 
-    function addUserToRole(address user, uint role) public {
+    function addUserToRole(address user, RoleUtils.Roles role) public {
         require(user != address(0), "No user passed");
-        require(role >= 0 && role <= 2, "Invalid role!");
+        //require(role >= 0 && role <= 2, "Invalid role!");
 
         userRoles[user] = role;
         usersPerRole[role].push(user);
@@ -51,7 +51,7 @@ contract InteractionNFT is ERC1155Supply {
     //TODO: call from token distribution, once there are funds distributed for a certain amount of interactions
     function markAsInactive(address owner, uint amount) public {
         require(owner != address(0), "no owner passed");
-        require(amount >= balanceOf(owner, userRoles[owner]));
+        require(amount >= balanceOf(owner, uint256(userRoles[owner])));
 
         inactiveInteractions[owner] += amount;
 
@@ -59,20 +59,22 @@ contract InteractionNFT is ERC1155Supply {
     }
 
     function getActiveInteractions(address user) public view returns(uint)  {
-        uint balance = balanceOf(user, userRoles[user]);
+        require(userRoles[user] != RoleUtils.Roles.NONE, "user has no role");
+        
+        uint balance = balanceOf(user, uint256(userRoles[user]));
         uint inactive = inactiveInteractions[user];
         return balance - inactive;
     }
 
-    function getRoleIds() pure public returns(uint[] memory) {
-        uint[] memory roles;
-        roles[0] = 0;
-        roles[1] = 1;
-        roles[2] = 2;
+    function getRoleIds() pure public returns(uint256[3] memory) {
+        uint256[3] memory roles;
+        roles[0] = 1;
+        roles[1] = 2;
+        roles[2] = 3;
         return roles;
     }
 
     function getUsersPerRole(uint role) view public returns(address[] memory) {
-        return usersPerRole[role];
+        return usersPerRole[RoleUtils.Roles(role)];
     }
 }

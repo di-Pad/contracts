@@ -10,6 +10,8 @@ const LinkToken = artifacts.require('LinkToken');
 const MockOracle = artifacts.require('MockOracle');
 const PartnersAgreement = artifacts.require('PartnersAgreement');
 const DefaultSupportedTokens = artifacts.require('DefaultSupportedTokens');
+const RoleUtils = artifacts.require('RoleUtils');
+const InteractionNFT = artifacts.require('InteractionNFT');
 const SkillWallet = artifacts.require('skill-wallet/contracts/main/SkillWallet');
 const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndokatjllz5iftciq4kpr4ez2pqg3i/buckets/bafzbeiaorr5jomvdpeqnqwfbmn72kdu7vgigxvseenjgwshoij22vopice";
 var BN = web3.utils.BN;
@@ -26,8 +28,10 @@ contract('PartnersAgreement', function (accounts) {
 
     this.minimumCommunity = await MinimumCommunity.new(this.skillWallet.address);
     this.defaultSupportedTokens = await DefaultSupportedTokens.new(true);
+    this.roleUtils = await RoleUtils.new();
 
     PartnersAgreement.link(this.defaultSupportedTokens);
+    PartnersAgreement.link(this.roleUtils);
 
     this.partnersAgreement = await PartnersAgreement.new(
       ZERO_ADDRESS, // partners contract
@@ -74,6 +78,9 @@ contract('PartnersAgreement', function (accounts) {
     });
 
     it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
+      const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
+      const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
+      await interactionNFTContract.addUserToRole(accounts[1], 1);
 
       const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[1]);
       assert.equal(initialInteractions.toString(), '0');

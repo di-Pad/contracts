@@ -44,19 +44,19 @@ contract TokenDistribution is ERC1155Burnable {
         supportedTokens = ISupportedTokens(_supportedTokens);        
     }
 
-    function recordInteraction(uint256 _role, address _user) public {
-        require(_role != 0, "role cannot be 0");
+    function recordInteraction(address _user, uint256 _amount) public {
         User storage user = users[_user];
 
         if (user.role == RoleUtils.Roles.NONE) {
-            user.role = RoleUtils.Roles(_role);
-            user.id = rolesUsers[RoleUtils.Roles(_role)].length;
-            rolesUsers[RoleUtils.Roles(_role)].push(_user);
-            userInteractions[RoleUtils.Roles(_role)].push(1);
+            RoleUtils.Roles role = RoleUtils.Roles(IPartnersAgreementInteractions(partnersAgreement).getUserRole(_user));
+            user.role = role;
+            user.id = rolesUsers[role].length;
+            rolesUsers[role].push(_user);
+            userInteractions[role].push(_amount);
         } else {
-            require(user.role == RoleUtils.Roles(_role), "role mismatch");
             uint256 id = user.id;
-            userInteractions[RoleUtils.Roles(_role)][id] = userInteractions[RoleUtils.Roles(_role)][id].add(1);
+            RoleUtils.Roles role = user.role;
+            userInteractions[role][id] = userInteractions[role][id].add(_amount);
         }
     }
 

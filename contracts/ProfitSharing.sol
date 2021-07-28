@@ -67,6 +67,10 @@ contract ProfitSharing {
         IERC20(_token).transfer(_to, balance);
     }
 
+    function recordInteraction(address _user) public {
+        TokenDistribution(tokenDistribution).recordInteraction(_user);
+    }
+
     function isUnsharedProfit() public view returns (bool) {
         for (uint256 i; i < supportedTokens.getSupportedTokensCount(); i++) {
             if (IERC20(supportedTokens.supportedTokens(i)).balanceOf(address(this)) > 0) {

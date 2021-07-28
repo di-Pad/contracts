@@ -5,4 +5,6 @@ interface IPartnersAgreementInteractions {
     function getAllMembers() external view returns (address[] memory);
 
     function getInteractionNFT(address user) external view returns(uint);
+
+    function getUserRole(address _user) external view returns (uint256);
 }
