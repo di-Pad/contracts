@@ -39,6 +39,7 @@ contract InteractionNFT is ERC1155Supply {
 
     function addUserToRole(address user, RoleUtils.Roles role) public {
         require(user != address(0), "No user passed");
+        require(userRoles[user] == RoleUtils.Roles.NONE, "already has role");
         //require(role >= 0 && role <= 2, "Invalid role!");
 
         userRoles[user] = role;

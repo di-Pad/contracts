@@ -16,13 +16,13 @@ contract ProfitSharing {
     uint256 public sharedProfit; //in percent
     ISupportedTokens public supportedTokens;
 
-    constructor(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) {
+    constructor(address _partenrsAgreement, address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) {
         require(sharedProfit < 100, "Shared profit > 100");
         require(_partner != address(0), "no partner address");
 
         partnersVault = new PartnersVault();
         partner = _partner;
-        tokenDistribution = address(new TokenDistribution(msg.sender, _supportedTokens, _rolesCount, ""));
+        tokenDistribution = address(new TokenDistribution(_partenrsAgreement, _supportedTokens, _rolesCount, ""));
         sharedProfit = _sharedProfit;
         supportedTokens = ISupportedTokens(_supportedTokens);
     }
@@ -67,8 +67,8 @@ contract ProfitSharing {
         IERC20(_token).transfer(_to, balance);
     }
 
-    function recordInteraction(address _user) public {
-        TokenDistribution(tokenDistribution).recordInteraction(_user);
+    function recordInteraction(address _user, uint256 _amount) public {
+        TokenDistribution(tokenDistribution).recordInteraction(_user, _amount);
     }
 
     function isUnsharedProfit() public view returns (bool) {

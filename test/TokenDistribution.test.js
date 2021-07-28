@@ -21,6 +21,8 @@ let partnersVault;
 let tokenDistribution;
 let supportedToken;
 let unsupportedToken;
+let partnersAgreement;
+let mockOracle;
 
 const rolesUsers = [
     [
@@ -72,6 +74,10 @@ contract("TokenDistribution", (accounts) => {
         const defaultSupportedTokens = await DefaultSupportedTokens.deploy();
         await defaultSupportedTokens.deployed();
 
+        const RoleUtils = await ethers.getContractFactory("RoleUtils");
+        const roleUtils = await RoleUtils.deploy();
+        await roleUtils.deployed();
+
         const SupportedTokens = await ethers.getContractFactory("SupportedTokens", {
             libraries: {
                 DefaultSupportedTokens: defaultSupportedTokens.address
@@ -82,13 +88,46 @@ contract("TokenDistribution", (accounts) => {
         const ProfitSharingFactory = await ethers.getContractFactory("ProfitSharingFactory");
         profitSharingFactory = await ProfitSharingFactory.deploy();
 
-        const deployTx = await profitSharingFactory.depolyProfitSharing(deployer.address, 20, rolesUsers.length, supportedTokens.address);
+        const LinkToken = await ethers.getContractFactory("LinkToken");
+        const linkTokenMock = await LinkToken.deploy();
 
-        const events = (await deployTx.wait()).events?.filter((e) => {
-            return e.event == "ProfitSharingDeployed"
+        const MockOracle = await ethers.getContractFactory("MockOracle");
+        mockOracle = await MockOracle.deploy(linkTokenMock.address);
+    
+        const SkillWallet = await ethers.getContractFactory("SkillWallet");
+        const skillWallet = await SkillWallet.deploy(linkTokenMock.address, mockOracle.address);
+    
+        const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
+        const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
+
+        const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
+            libraries: {
+                DefaultSupportedTokens: defaultSupportedTokens.address,
+                RoleUtils: roleUtils.address
+            }
         });
+        partnersAgreement = await PartnersAgreement.deploy(
+            ZERO_ADDRESS, // partners contract
+            accounts[0],
+            minimumCommunity.address,
+            2,
+            1000,
+            profitSharingFactory.address,
+            mockOracle.address,
+            linkTokenMock.address
+        );
+        await partnersAgreement.deployed();
+
+        await linkTokenMock.transfer(
+            partnersAgreement.address,
+            '2000000000000000000',
+        );
+
+        await partnersAgreement.deployProfitSharing(20, supportedTokens.address);
+
+        const profitSharingAddress = await partnersAgreement.profitSharing();
         
-        profitSharing = await ethers.getContractAt("ProfitSharing", events[0].args._profitSharing);
+        profitSharing = await ethers.getContractAt("ProfitSharing", profitSharingAddress);
 
         tokenDistribution = await ethers.getContractAt("TokenDistribution", await profitSharing.tokenDistribution());
 
@@ -100,12 +139,33 @@ contract("TokenDistribution", (accounts) => {
         await profitSharing.splitAllProfits();
 
         //simulate some interations
+        const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
+        const interactionNFTContract = await ethers.getContractAt("InteractionNFT", interactionNFTAddress);
+
         //TODO: replace with actual interactions once they are integrated
         for (let i = 0; i < interactions.length; i++) {
             for (let j = 0; j < interactions[i].length; j++) {
-                for (let k = 0; k < interactions[i][j]; k++) {
+                await interactionNFTContract.addUserToRole(rolesUsers[i][j], i + 1);
+
+                const tx = await partnersAgreement.queryForNewInteractions(
+                    rolesUsers[i][j]
+                );
+
+                const events = (await tx.wait()).events?.filter((e) => {
+                    return e.event == "ChainlinkRequested"
+                });
+
+                await mockOracle.fulfillOracleRequest(
+                    events[0].args.id,
+                    interactions[i][j]
+                );
+
+                /*for (let k = 0; k < interactions[i][j]; k++) {
                     await tokenDistribution.recordInteraction(i + 1, rolesUsers[i][j]);
-                }          
+                }*/
+                /*console.log(await partnersAgreement.getInteractionNFT(rolesUsers[i][j]));
+                console.log(String(await interactionNFTContract.balanceOf(rolesUsers[i][j], i + 1)));
+                console.log(String(await tokenDistribution.userInteractions(i + 1, j)));*/                
             }
         }
     });

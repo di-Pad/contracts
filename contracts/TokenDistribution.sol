@@ -45,12 +45,15 @@ contract TokenDistribution is ERC1155Burnable {
     }
 
     function recordInteraction(address _user, uint256 _amount) public {
-        User storage user = users[_user];
+        User memory user = users[_user];
 
         if (user.role == RoleUtils.Roles.NONE) {
             RoleUtils.Roles role = RoleUtils.Roles(IPartnersAgreementInteractions(partnersAgreement).getUserRole(_user));
+            require(role != RoleUtils.Roles.NONE, "no role");
+            
             user.role = role;
             user.id = rolesUsers[role].length;
+            users[_user] = user;
             rolesUsers[role].push(_user);
             userInteractions[role].push(_amount);
         } else {
