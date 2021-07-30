@@ -41,20 +41,21 @@ const rolesUsers = [
     ]
 ];
 
+//interactions[role][user][amounts]
 const interactions = [
     [
-        1,
-        4,
-        9,
-        16,
-        25
+        [1],
+        [4],
+        [4, 5],
+        [16],
+        [19, 6]
     ],
     [
-        4,
-        9,
-        16,
-        25,
-        36
+        [4],
+        [3, 3, 3],
+        [16],
+        [25],
+        [36]
     ]
 ];
 
@@ -120,7 +121,7 @@ contract("TokenDistribution", (accounts) => {
 
         await linkTokenMock.transfer(
             partnersAgreement.address,
-            '2000000000000000000',
+            '200000000000000000000',
         );
 
         await partnersAgreement.deployProfitSharing(20, supportedTokens.address);
@@ -146,22 +147,21 @@ contract("TokenDistribution", (accounts) => {
             for (let j = 0; j < interactions[i].length; j++) {
                 await interactionNFTContract.addUserToRole(rolesUsers[i][j], i + 1);
 
-                const tx = await partnersAgreement.queryForNewInteractions(
-                    rolesUsers[i][j]
-                );
-
-                const events = (await tx.wait()).events?.filter((e) => {
-                    return e.event == "ChainlinkRequested"
-                });
-
-                await mockOracle.fulfillOracleRequest(
-                    events[0].args.id,
-                    interactions[i][j]
-                );
-
-                /*for (let k = 0; k < interactions[i][j]; k++) {
-                    await tokenDistribution.recordInteraction(i + 1, rolesUsers[i][j]);
-                }*/
+                for (let k = 0; k < interactions[i][j].length; k++) {
+                    //await tokenDistribution.recordInteraction(i + 1, rolesUsers[i][j]);
+                    const tx = await partnersAgreement.queryForNewInteractions(
+                        rolesUsers[i][j]
+                    );
+    
+                    const events = (await tx.wait()).events?.filter((e) => {
+                        return e.event == "ChainlinkRequested"
+                    });
+    
+                    await mockOracle.fulfillOracleRequest(
+                        events[0].args.id,
+                        interactions[i][j][k]
+                    );
+                }
                 /*console.log(await partnersAgreement.getInteractionNFT(rolesUsers[i][j]));
                 console.log(String(await interactionNFTContract.balanceOf(rolesUsers[i][j], i + 1)));
                 console.log(String(await tokenDistribution.userInteractions(i + 1, j)));*/                
@@ -190,19 +190,23 @@ contract("TokenDistribution", (accounts) => {
             await profitSharing.splitAllProfits();
 
             for (let i = 0; i < interactions.length; i++) {
-                for (let j = 0; j < interactions[i].length; j++) {    
-                    const tx = await partnersAgreement.queryForNewInteractions(
-                        rolesUsers[i][j]
-                    );
-    
-                    const events = (await tx.wait()).events?.filter((e) => {
-                        return e.event == "ChainlinkRequested"
-                    });
-    
-                    await mockOracle.fulfillOracleRequest(
-                        events[0].args.id,
-                        interactions[i][j]
-                    );               
+                for (let j = 0; j < interactions[i].length; j++) {   
+                    for (let k = 0; k < interactions[i][j].length; k++) {
+                        //await tokenDistribution.recordInteraction(i + 1, rolesUsers[i][j]);
+
+                        const tx = await partnersAgreement.queryForNewInteractions(
+                            rolesUsers[i][j]
+                        );
+        
+                        const events = (await tx.wait()).events?.filter((e) => {
+                            return e.event == "ChainlinkRequested"
+                        });
+        
+                        await mockOracle.fulfillOracleRequest(
+                            events[0].args.id,
+                            interactions[i][j][k]
+                        );
+                    }             
                 }
             }
 
