@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./QuadraticDistribution.sol";
 import "./RoleUtils.sol";
 import "./ISupportedTokens.sol";
+import "./IPartnersAgreementInteractions.sol";
 import "./RoleDistributor.sol";
 
 contract TokenDistribution is ERC1155Burnable {
@@ -18,6 +19,12 @@ contract TokenDistribution is ERC1155Burnable {
         uint256 id;
     }
 
+    struct User {
+        uint256 id;
+        RoleUtils.Roles role;
+        uint256 lastCycle; // to check if user was already used and id updated in current cycle
+    }
+
     address public partnersAgreement;
     address public distributedToken;
     ISupportedTokens public supportedTokens;
@@ -25,38 +32,50 @@ contract TokenDistribution is ERC1155Burnable {
     mapping (RoleUtils.Roles => address) public roleDistributors;
     mapping (RoleUtils.Roles => uint256[]) public userInteractions;
     mapping (RoleUtils.Roles => address[]) public rolesUsers;
-    mapping (address => mapping(RoleUtils.Roles => userRoleId)) public userRoles;
+    mapping (address => User) public users;
     uint256 unclaimedDistribution = 0;
     uint256 lastDistributionTimestamp = 0;
-    uint256 distributionPeriod = 7 days; //TODO: populate with param 
+    uint256 distributionPeriod = 7 days; //TODO: populate with param
+    uint256 cycle = 1;
 
-    constructor(address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
+    constructor(address _partnersAgreement, address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
         require (_rolesCount == 2 || _rolesCount == 3, "Roles count is not 2 or 3");
         
-        partnersAgreement = msg.sender;
+        partnersAgreement = _partnersAgreement;
         rolesCount = _rolesCount;
         supportedTokens = ISupportedTokens(_supportedTokens);        
     }
 
-    function recordInteraction(uint256 _role, address _user) public {
-        userRoleId storage userRole = userRoles[_user][RoleUtils.Roles(_role)];
+    function recordInteraction(address _user, uint256 _amount) public {
+        User memory user = users[_user];
 
-        if (!userRole.hasRole) {
-            userRole.hasRole = true;
-            userRole.id = rolesUsers[RoleUtils.Roles(_role)].length;
-            rolesUsers[RoleUtils.Roles(_role)].push(_user);
-            userInteractions[RoleUtils.Roles(_role)].push(1);
+        if (user.role == RoleUtils.Roles.NONE || user.lastCycle < cycle) {
+            RoleUtils.Roles role = RoleUtils.Roles(IPartnersAgreementInteractions(partnersAgreement).getUserRole(_user));
+            require(role != RoleUtils.Roles.NONE, "no role");
+            
+            user.role = role;
+            user.id = rolesUsers[role].length;
+            user.lastCycle = cycle;
+            users[_user] = user;
+            rolesUsers[role].push(_user);
+            userInteractions[role].push(_amount);
         } else {
-            uint256 id = userRole.id;
-            userInteractions[RoleUtils.Roles(_role)][id] = userInteractions[RoleUtils.Roles(_role)][id].add(1);
+            uint256 id = user.id;
+            RoleUtils.Roles role = user.role;
+            userInteractions[role][id] = userInteractions[role][id].add(_amount);
         }
     }
 
     function distribute() public {
         require(block.timestamp >= lastDistributionTimestamp.add(distributionPeriod), "next period has not started yet");
 
+        //get users
+        //address[] memory users = IPartnersAgreementInteractions(partnersAgreement).getAllMembers();
+        //uint256
+
+
         //deploy role distributors
-        for (uint i = 0; i < rolesCount; i++) {
+        for (uint i = 1; i <= rolesCount; i++) {
             roleDistributors[RoleUtils.Roles(i)] = address(new RoleDistributor(
                 i, 
                 distributionPeriod,
@@ -69,8 +88,12 @@ contract TokenDistribution is ERC1155Burnable {
         uint256[] memory unweigted = new uint256[](rolesCount);
 
         //get unweighted allocations
-        for (uint i = 0; i < rolesCount; i++) {
-            unweigted[i] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[RoleUtils.Roles(i)]);
+        for (uint i = 1; i <= rolesCount; i++) {
+            unweigted[i - 1] = QuadraticDistribution.calcUnweightedAlloc(userInteractions[RoleUtils.Roles(i)]);
+            
+            //cleanup
+            delete userInteractions[RoleUtils.Roles(i)];
+            delete rolesUsers[RoleUtils.Roles(i)];
         }
 
         //get weights
@@ -92,12 +115,12 @@ contract TokenDistribution is ERC1155Burnable {
                 for (uint j = 0; j < rolesCount; j++) {
                     //mint ERC1155
                     if (mint1155) {
-                        _mint(roleDistributors[RoleUtils.Roles(j)],j, weights[j], "");
+                        _mint(roleDistributors[RoleUtils.Roles(j + 1)],j, weights[j], "");
                         mint1155 = false;
                     }
 
                     //send tokens                    
-                    IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[RoleUtils.Roles(j)], weighted[j]);
+                    IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[RoleUtils.Roles(j + 1)], weighted[j]);
                 }
             }
         }
@@ -105,5 +128,14 @@ contract TokenDistribution is ERC1155Burnable {
         require(hasFunds, "no funds to distribute");
 
         lastDistributionTimestamp = block.timestamp;
-    }    
+        cycle++; //no risk of overflow here
+    }
+
+    function _getUsers() internal view {
+
+    }
+
+    function _getInteractions() internal view {
+
+    }   
 }

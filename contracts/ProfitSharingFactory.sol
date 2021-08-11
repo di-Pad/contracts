@@ -13,8 +13,8 @@ contract ProfitSharingFactory {
         address _supportedTokens
     );
 
-    function depolyProfitSharing(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) public returns (address) {
-        address newProfitSharing = address(new ProfitSharing(_partner, _sharedProfit, _rolesCount, _supportedTokens));
+    function deployProfitSharing(address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens) public returns (address) {
+        address newProfitSharing = address(new ProfitSharing(msg.sender, _partner, _sharedProfit, _rolesCount, _supportedTokens));
 
         emit ProfitSharingDeployed(newProfitSharing, msg.sender, _partner, _sharedProfit, _rolesCount, _supportedTokens);
 

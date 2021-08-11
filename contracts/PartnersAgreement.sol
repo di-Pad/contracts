@@ -10,7 +10,7 @@ import "./SupportedTokens.sol";
 //import "./TokenDistribution.sol";
 import "./ICommunity.sol";
 import "./IProfitSharingFactory.sol";
-
+import "./IProfitSharingInteractions.sol";
 
 contract PartnersAgreement is ChainlinkClient {
     address public owner;
@@ -105,20 +105,39 @@ contract PartnersAgreement is ChainlinkClient {
         public
         recordChainlinkFulfillment(_requestId)
     {
-        require(userRequests[_requestId] != address(0), "req not found");
+        address user = userRequests[_requestId];
+
+        require(user != address(0), "req not found");
         ICommunity community = ICommunity(communityAddress);
-        require(community.isMember(userRequests[_requestId]), "Invalid user address");
-        partnersInteractionNFTContract.safeTransferFrom(address(this), userRequests[_requestId], partnersInteractionNFTContract.userRoles(userRequests[_requestId]), _result, "");
+        require(community.isMember(user), "Invalid user address");
+        partnersInteractionNFTContract.safeTransferFrom(
+            address(this), 
+            user, 
+            uint256(partnersInteractionNFTContract.userRoles(user)), 
+            _result, 
+            ""
+        );
         //TODO: maybe add record interactions!
+        if (profitSharing != address(0)) {
+            IProfitSharingInteractions(profitSharing).recordInteraction(user, _result);
+        }
     }
 
     function getInteractionNFT(address user) public view returns(uint) {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
     
-    // TODO: ensure that there's one profit sharing per agreement
-    function deployProfitSharing(uint256 _sharedProfit) public {
-        supportedTokens = address (new SupportedTokens(true));
-        profitSharing = profitSharingFactory.deployProfitSharing(owner, _sharedProfit, rolesCount, supportedTokens);
+    function deployProfitSharing(uint256 _sharedProfit, address _supportedTokens) public {
+        require (profitSharing == address(0), "profit sharing already deployed");
+
+        if (_supportedTokens == address(0)) {
+            _supportedTokens = address (new SupportedTokens(true));
+        }
+
+        profitSharing = profitSharingFactory.deployProfitSharing(owner, _sharedProfit, rolesCount, _supportedTokens);
+    }
+
+    function getUserRole(address _user) public view returns (uint256) {
+        return uint256(partnersInteractionNFTContract.userRoles(_user));
     }
 }

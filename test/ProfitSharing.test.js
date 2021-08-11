@@ -1,3 +1,4 @@
+const { getContractFactory } = require('@nomiclabs/hardhat-ethers/types');
 const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { Contract } = require('ethers');
@@ -20,13 +21,23 @@ let partnersVault;
 let tokenDistribution;
 let supportedToken;
 let unsupportedToken;
+let partnersAgreement;
+let mockOracle;
+let defaultSupportedTokens;
+let roleUtils;
 
 contract("ProfitSharing", (accounts) => {
     before(async () => {
+        //deploy libs
         const DefaultSupportedTokens = await ethers.getContractFactory("DefaultSupportedTokens");
-        const defaultSupportedTokens = await DefaultSupportedTokens.deploy();
+        defaultSupportedTokens = await DefaultSupportedTokens.deploy();
         await defaultSupportedTokens.deployed();
 
+        const RoleUtils = await ethers.getContractFactory("RoleUtils");
+        roleUtils = await RoleUtils.deploy();
+        await roleUtils.deployed();
+
+        //deploy factory and supported tokens contract
         const SupportedTokens = await ethers.getContractFactory("SupportedTokens", {
             libraries: {
                 DefaultSupportedTokens: defaultSupportedTokens.address
@@ -36,21 +47,54 @@ contract("ProfitSharing", (accounts) => {
 
         const ProfitSharingFactory = await ethers.getContractFactory("ProfitSharingFactory");
         profitSharingFactory = await ProfitSharingFactory.deploy();
+
+        
     });
 
     describe("Deployment", async () => {
-        it("Should deploy Profit Sharing contract", async () => {
+        before(async () => {
+            //deploy Partners Agreement and dependencies
+
+            const LinkToken = await ethers.getContractFactory("LinkToken");
+            const linkTokenMock = await LinkToken.deploy();
+
+            const MockOracle = await ethers.getContractFactory("MockOracle");
+            mockOracle = await MockOracle.deploy(linkTokenMock.address);
+
+            const SkillWallet = await ethers.getContractFactory("SkillWallet");
+            const skillWallet = await SkillWallet.deploy(linkTokenMock.address, mockOracle.address);
+
+            const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
+            const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
+
+            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
+                libraries: {
+                    DefaultSupportedTokens: defaultSupportedTokens.address,
+                    RoleUtils: roleUtils.address
+                }
+            });
+            partnersAgreement = await PartnersAgreement.deploy(
+                ZERO_ADDRESS, // partners contract
+                accounts[0],
+                minimumCommunity.address,
+                3,
+                100,
+                profitSharingFactory.address,
+                mockOracle.address,
+                linkTokenMock.address
+            );
+        });
+        
+        it("Should deploy Profit Sharing contract from partners agreement", async () => {
             const [deployer] = await ethers.getSigners();
             //address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens
-            const deployTx = await profitSharingFactory.depolyProfitSharing(deployer.address, 10, 3, supportedTokens.address);
+            await partnersAgreement.deployProfitSharing(10, supportedTokens.address);
 
-            const events = (await deployTx.wait()).events?.filter((e) => {
-                return e.event == "ProfitSharingDeployed"
-            });
+            const profitSharingAddress = await partnersAgreement.profitSharing();
+
+            expect(profitSharingAddress).not.to.equal(ZERO_ADDRESS);
             
-            profitSharing = await ethers.getContractAt("ProfitSharing", events[0].args._profitSharing);
-
-            expect(profitSharing.address).not.to.equal(ZERO_ADDRESS);
+            profitSharing = await ethers.getContractAt("ProfitSharing", profitSharingAddress);
         });
 
         it("Should have set proper parameters", async () => {
@@ -81,13 +125,46 @@ contract("ProfitSharing", (accounts) => {
             //deploy stuff
             const [deployer] = await ethers.getSigners();
 
-            const deployTx = await profitSharingFactory.depolyProfitSharing(deployer.address, 10, 3, supportedTokens.address);
+            const LinkToken = await ethers.getContractFactory("LinkToken");
+            const linkTokenMock = await LinkToken.deploy();
 
-            const events = (await deployTx.wait()).events?.filter((e) => {
-                return e.event == "ProfitSharingDeployed"
+            const MockOracle = await ethers.getContractFactory("MockOracle");
+            mockOracle = await MockOracle.deploy(linkTokenMock.address);
+        
+            const SkillWallet = await ethers.getContractFactory("SkillWallet");
+            const skillWallet = await SkillWallet.deploy(linkTokenMock.address, mockOracle.address);
+        
+            const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
+            const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
+
+            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
+                libraries: {
+                    DefaultSupportedTokens: defaultSupportedTokens.address,
+                    RoleUtils: roleUtils.address
+                }
             });
+            partnersAgreement = await PartnersAgreement.deploy(
+                ZERO_ADDRESS, // partners contract
+                accounts[0],
+                minimumCommunity.address,
+                3,
+                100,
+                profitSharingFactory.address,
+                mockOracle.address,
+                linkTokenMock.address
+            );
+            await partnersAgreement.deployed();
+
+            await linkTokenMock.transfer(
+                partnersAgreement.address,
+                '2000000000000000000',
+            );
+
+            await partnersAgreement.deployProfitSharing(10, supportedTokens.address);
+
+            const profitSharingAddress = await partnersAgreement.profitSharing();
             
-            profitSharing = await ethers.getContractAt("ProfitSharing", events[0].args._profitSharing);
+            profitSharing = await ethers.getContractAt("ProfitSharing", profitSharingAddress);
             partnersVault = await ethers.getContractAt("PartnersVault", await profitSharing.partnersVault());
             tokenDistribution = await ethers.getContractAt("TokenDistribution", await profitSharing.tokenDistribution());
 
