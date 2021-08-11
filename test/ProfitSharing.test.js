@@ -69,7 +69,6 @@ contract("ProfitSharing", (accounts) => {
 
             const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
                 libraries: {
-                    DefaultSupportedTokens: defaultSupportedTokens.address,
                     RoleUtils: roleUtils.address
                 }
             });
@@ -79,7 +78,6 @@ contract("ProfitSharing", (accounts) => {
                 minimumCommunity.address,
                 3,
                 100,
-                profitSharingFactory.address,
                 mockOracle.address,
                 linkTokenMock.address
             );
@@ -87,8 +85,13 @@ contract("ProfitSharing", (accounts) => {
         
         it("Should deploy Profit Sharing contract from partners agreement", async () => {
             const [deployer] = await ethers.getSigners();
-            //address _partner, uint256 _sharedProfit, uint256 _rolesCount, address _supportedTokens
-            await partnersAgreement.deployProfitSharing(10, supportedTokens.address);
+            
+            const deployTx = await profitSharingFactory.deployProfitSharing(partnersAgreement.address, 10, supportedTokens.address);
+            const events = (await deployTx.wait()).events?.filter((e) => {
+                return e.event == "ProfitSharingDeployed"
+            });
+
+            await partnersAgreement.setProfitSharing(events[0].args._profitSharing);
 
             const profitSharingAddress = await partnersAgreement.profitSharing();
 
@@ -139,7 +142,6 @@ contract("ProfitSharing", (accounts) => {
 
             const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
                 libraries: {
-                    DefaultSupportedTokens: defaultSupportedTokens.address,
                     RoleUtils: roleUtils.address
                 }
             });
@@ -149,7 +151,6 @@ contract("ProfitSharing", (accounts) => {
                 minimumCommunity.address,
                 3,
                 100,
-                profitSharingFactory.address,
                 mockOracle.address,
                 linkTokenMock.address
             );
@@ -160,7 +161,12 @@ contract("ProfitSharing", (accounts) => {
                 '2000000000000000000',
             );
 
-            await partnersAgreement.deployProfitSharing(10, supportedTokens.address);
+            const deployTx = await profitSharingFactory.deployProfitSharing(partnersAgreement.address, 10, supportedTokens.address);
+            const events = (await deployTx.wait()).events?.filter((e) => {
+                return e.event == "ProfitSharingDeployed"
+            });
+
+            await partnersAgreement.setProfitSharing(events[0].args._profitSharing);
 
             const profitSharingAddress = await partnersAgreement.profitSharing();
             

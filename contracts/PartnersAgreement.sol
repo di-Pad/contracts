@@ -6,20 +6,17 @@ import "skill-wallet/contracts/main/ISkillWallet.sol";
 import "skill-wallet/contracts/main/SkillWallet.sol";
 
 import "./InteractionNFT.sol";
-import "./SupportedTokens.sol";
-//import "./TokenDistribution.sol";
+//import "./SupportedTokens.sol";
 import "./ICommunity.sol";
-import "./IProfitSharingFactory.sol";
 import "./IProfitSharingInteractions.sol";
 
 contract PartnersAgreement is ChainlinkClient {
     address public owner;
     address public communityAddress;
     address public partnersContract;
-    address supportedTokens;
-    uint256 rolesCount;
+    //address supportedTokens;
+    uint256 public rolesCount;
     address public profitSharing;
-    IProfitSharingFactory private profitSharingFactory;
 
     mapping(address => uint) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
@@ -39,7 +36,6 @@ contract PartnersAgreement is ChainlinkClient {
         address _communityAddress,
         uint _rolesCount,
         uint _numberOfActions,
-        address _profitSharingFactory,
         address _oracle,
         address _chainlinkToken
     ) public {
@@ -49,7 +45,6 @@ contract PartnersAgreement is ChainlinkClient {
         partnersInteractionNFTContract = new InteractionNFT(_rolesCount, _numberOfActions);
         owner = _owner;
         communityAddress = _communityAddress;
-        profitSharingFactory = IProfitSharingFactory(_profitSharingFactory);
         
         setChainlinkToken(_chainlinkToken);
         oracle = _oracle;
@@ -126,15 +121,12 @@ contract PartnersAgreement is ChainlinkClient {
     function getInteractionNFT(address user) public view returns(uint) {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
-    
-    function deployProfitSharing(uint256 _sharedProfit, address _supportedTokens) public {
-        require (profitSharing == address(0), "profit sharing already deployed");
 
-        if (_supportedTokens == address(0)) {
-            _supportedTokens = address (new SupportedTokens(true));
-        }
+    function setProfitSharing(address _profitSharing) public {
+        require (profitSharing == address(0), "profit sharing already set");
+        require (_profitSharing != address(0), "profit sharing address is 0");
 
-        profitSharing = profitSharingFactory.deployProfitSharing(owner, _sharedProfit, rolesCount, _supportedTokens);
+        profitSharing = _profitSharing;
     }
 
     function getUserRole(address _user) public view returns (uint256) {
