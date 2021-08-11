@@ -57,16 +57,8 @@ contract PartnersAgreement is ChainlinkClient {
     }
     
     function getAllMembers() public view returns (address[] memory) {
-        // TODO - add getMembers function in community.
         ICommunity community = ICommunity(communityAddress);
-        ISkillWallet skillWallet = ISkillWallet(community.getSkillWalletAddress());
-        uint[] memory members = community.getMembers();
-        address[] memory result;
-
-        for(uint index = 0; index < members.length; index ++ ) {
-            result[index] = skillWallet.ownerOf(members[index]);
-        }
-        return result;
+        return community.getMemberAddresses();
     }
 
     function queryForNewInteractions(
