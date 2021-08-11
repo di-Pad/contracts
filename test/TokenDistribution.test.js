@@ -103,7 +103,6 @@ contract("TokenDistribution", (accounts) => {
 
         const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
             libraries: {
-                DefaultSupportedTokens: defaultSupportedTokens.address,
                 RoleUtils: roleUtils.address
             }
         });
@@ -113,7 +112,6 @@ contract("TokenDistribution", (accounts) => {
             minimumCommunity.address,
             2,
             1000,
-            profitSharingFactory.address,
             mockOracle.address,
             linkTokenMock.address
         );
@@ -124,7 +122,12 @@ contract("TokenDistribution", (accounts) => {
             '200000000000000000000',
         );
 
-        await partnersAgreement.deployProfitSharing(20, supportedTokens.address);
+        const deployTx = await profitSharingFactory.deployProfitSharing(partnersAgreement.address, 20, supportedTokens.address);
+        const events = (await deployTx.wait()).events?.filter((e) => {
+            return e.event == "ProfitSharingDeployed"
+        });
+
+        await partnersAgreement.setProfitSharing(events[0].args._profitSharing);
 
         const profitSharingAddress = await partnersAgreement.profitSharing();
         

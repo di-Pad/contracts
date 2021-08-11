@@ -30,7 +30,6 @@ contract('PartnersAgreement', function (accounts) {
     this.defaultSupportedTokens = await DefaultSupportedTokens.new(true);
     this.roleUtils = await RoleUtils.new();
 
-    PartnersAgreement.link(this.defaultSupportedTokens);
     PartnersAgreement.link(this.roleUtils);
 
     this.partnersAgreement = await PartnersAgreement.new(
@@ -39,7 +38,6 @@ contract('PartnersAgreement', function (accounts) {
       this.minimumCommunity.address,
       3,
       100,
-      this.profitSharingFactory.address,
       this.mockOracle.address,
       this.linkTokenMock.address,
       { from: accounts[0] }
@@ -61,7 +59,6 @@ contract('PartnersAgreement', function (accounts) {
         this.minimumCommunity.address,
         3,
         100,
-        this.profitSharingFactory.address,
         this.mockOracle.address,
         this.linkTokenMock.address,
         { from: accounts[0] }

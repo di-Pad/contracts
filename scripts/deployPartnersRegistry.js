@@ -23,9 +23,7 @@ const main = async () => {
         console.log("Default Supported Tokens library: ", defaultSupportedTokensAddress);
     }
 
-    const partnersRegistry = await deploy("PartnersRegistry", [distributedTownAddress, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS], {}, {
-        DefaultSupportedTokens: defaultSupportedTokensAddress
-    });
+    const partnersRegistry = await deploy("PartnersRegistry", [distributedTownAddress, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS], {}, {});
     await partnersRegistry.deployed();
 
     console.log(

@@ -15,14 +15,12 @@ contract PartnersRegistry {
     );
     IDistributedTown distributedTown;
     address[] agreements;
-    address private profitSharingFactory;
     address oracle;
     address linkToken;
 
-    constructor(address _distributedTownAddress, address _profitSharingFactory,
+    constructor(address _distributedTownAddress,
     address _oracle, address _linkToken) public {
         distributedTown = IDistributedTown(_distributedTownAddress);
-        profitSharingFactory = _profitSharingFactory;
         oracle = _oracle;
         linkToken = _linkToken;
     }
@@ -63,7 +61,6 @@ contract PartnersRegistry {
                 communityAddress,
                 rolesCount,
                 numberOfActions,
-                profitSharingFactory,
                 oracle,
                 linkToken
             );
