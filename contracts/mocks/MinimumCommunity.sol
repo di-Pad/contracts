@@ -31,4 +31,9 @@ contract MinimumCommunity is ICommunity {
     function getSkillWalletAddress() public view override returns(address) {
         return skillWalletAddress;
     }
+
+    function getMemberAddresses() public view override returns(address[] memory) {
+        address[] memory members;
+        return members;
+    }
 }

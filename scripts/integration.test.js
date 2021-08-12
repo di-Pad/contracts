@@ -1,8 +1,10 @@
-const partnersRegistryAddress = '0x823C547BF1eacd327890E5C6F5c04A0021c1682C'
-const distributedTownAddress = '0x7cf5C54b06410B4051460cc5E24aC352230B198b'
+const partnersRegistryAddress = '0x48200dCAEd73138D3EaaA8A86dBa075038557F39'
+const distributedTownAddress = '0xA60119Aed58d22F284E31ce21Df773809817dfE5'
 // const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
 // const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
 const { assert } = require('chai')
+const fs = require("fs");
+
 var ethers = require('ethers')
 var partnersRegistryAbi = require('../artifacts/contracts/PartnersRegistry.sol/PartnersRegistry.json')
   .abi
@@ -18,10 +20,10 @@ function mnemonic() {
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
-  // 'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
+  'https://rpc-mumbai.maticvigil.com/v1/9ca44fbe543c19857d4e47669aae2a9774e11c66'
   
 
-  'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
+  // 'https://kovan.infura.io/v3/779285194bd146b48538d269d1332f20'
 )
 
 // Wallet connected to a provider
@@ -56,12 +58,12 @@ async function createPartnersAgreement() {
     'https://hub.textile.io/ipfs/bafkreicezefuc6einewxdqhlpefelzjponwdqt4vmp2byosq5uwpn7hgoq'
   const createTx = await partnersRegistryContract.create(
     url,
-    0,
+    1,
     3,
     100,
     '0x1d08c93724741eE0E43ac9D623A127F48B16c2a8',
-    50
-    // { gasPrice: 100000000, gasLimit: 85000 }
+    50,
+    { gasPrice: 1000000000, gasLimit: 850000 }
 
   )
   const createTxResult = await createTx.wait()
@@ -77,8 +79,8 @@ async function createPartnersAgreement() {
 }
 
 async function test() {
-  await setPartnersRegistryAddress();
-  // await createPartnersAgreement()
+  // await setPartnersRegistryAddress();
+  await createPartnersAgreement()
 }
 
 test()
