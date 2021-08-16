@@ -8,7 +8,6 @@ import "./ICommunity.sol";
 import "skill-wallet/contracts/main/ISkillWallet.sol";
 
 contract PartnersRegistry {
-
     event PartnersAgreementCreated(
         address partnersAgreementAddress,
         address communityAddress
@@ -18,14 +17,21 @@ contract PartnersRegistry {
     address oracle;
     address linkToken;
 
-    constructor(address _distributedTownAddress,
-    address _oracle, address _linkToken) public {
+    constructor(
+        address _distributedTownAddress,
+        address _oracle,
+        address _linkToken
+    ) public {
         distributedTown = IDistributedTown(_distributedTownAddress);
         oracle = _oracle;
         linkToken = _linkToken;
     }
 
-    function getPartnerAgreementAddresses() public view returns(address[] memory) {
+    function getPartnerAgreementAddresses()
+        public
+        view
+        returns (address[] memory)
+    {
         return agreements;
     }
 
@@ -46,27 +52,34 @@ contract PartnersRegistry {
             "Number of actions should be between 1 and 100"
         );
 
-        distributedTown.createCommunity(metadata, template, membersAllowed, msg.sender);
+        distributedTown.createCommunity(
+            metadata,
+            template,
+            membersAllowed,
+            msg.sender
+        );
         address communityAddress = distributedTown.getCommunityByOwner(
             msg.sender
         );
 
-        if (communityAddress != address(0)) {
-            ICommunity community = ICommunity(communityAddress);
-            uint256 credits;
+        require(
+            communityAddress != address(0),
+            "Community failed to be created!"
+        );
+        ICommunity community = ICommunity(communityAddress);
+        uint256 credits;
 
-            PartnersAgreement agreement = new PartnersAgreement(
-                partnersContractAddress,
-                msg.sender,
-                communityAddress,
-                rolesCount,
-                numberOfActions,
-                oracle,
-                linkToken
-            );
-            agreements.push(address(agreement));
+        PartnersAgreement agreement = new PartnersAgreement(
+            partnersContractAddress,
+            msg.sender,
+            communityAddress,
+            rolesCount,
+            numberOfActions,
+            oracle,
+            linkToken
+        );
+        agreements.push(address(agreement));
 
-            emit PartnersAgreementCreated(address(agreement), communityAddress);
-        }
+        emit PartnersAgreementCreated(address(agreement), communityAddress);
     }
 }

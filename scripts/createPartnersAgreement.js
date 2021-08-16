@@ -10,7 +10,7 @@ const metadataUrl = "https://hub.textile.io/thread/bafkwfcy3l745x57c7vy3z2ss6ndo
 const main = async () => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
-    const partnersRegistryAddress = "0xb745EDB1fb993055fd4fd366A0c9791B2d3060b4";
+    const partnersRegistryAddress = "0x48200dCAEd73138D3EaaA8A86dBa075038557F39";
 
     console.log("\n\n 📡 Creating new PartnersAgreement...\n");
 
