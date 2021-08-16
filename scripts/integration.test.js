@@ -1,5 +1,5 @@
-const partnersRegistryAddress = '0x48200dCAEd73138D3EaaA8A86dBa075038557F39'
-const distributedTownAddress = '0xA60119Aed58d22F284E31ce21Df773809817dfE5'
+const partnersRegistryAddress = '0xAa4bd2A6C5e757FB39B7D01384823377Dfc58e4d'
+const distributedTownAddress = '0x3AF9ba336effE591bfC0BF0ADe8Ec5e069589075'
 // const partnersRegistryAddress = '0x7a95A9f0A99fb21548e58821059502C85c193956';
 // const distributedTownAddress = '0xf628bdee30627558aAe8c19d1522b08A2bfb6423';
 const { assert } = require('chai')
@@ -16,7 +16,7 @@ var distributedTownAbi = require('../artifacts/contracts/IDistributedTown.sol/ID
 
 const userAddress = '0x2CEF62C91Dd92FC35f008D1d6Ed08EADF64306bc';
 function mnemonic() {
-  return 'close gesture fatal vacant time toy general horror payment visit case you'
+  return ''
 }
 
 const provider = new ethers.providers.JsonRpcProvider(
@@ -79,8 +79,8 @@ async function createPartnersAgreement() {
 }
 
 async function test() {
-  // await setPartnersRegistryAddress();
-  await createPartnersAgreement()
+  await setPartnersRegistryAddress();
+  // await createPartnersAgreement()
 }
 
 test()
