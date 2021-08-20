@@ -184,14 +184,15 @@ contract("RoleDistributor", (accounts) => {
     });
 
     describe("Token Distibution", async () => {
-        it("Should distribute distribute tokens to users", async () => {
+        it("Should calculate user shares", async () => {
             for (let i = 0; i < roleDistributors.length; i++) {
-                await roleDistributors[i].distributeToUsers();
+                await roleDistributors[i].calculateShares();
 
-                expect(String(await supportedToken.balanceOf(roleDistributors[i].address)).length).to.be.lessThan(18);
+                //expect(String(await supportedToken.balanceOf(roleDistributors[i].address)).length).to.be.lessThan(18);
 
                 for (let j = 0; j < rolesUsers[i].length; j++) {
-                    expect(await supportedToken.balanceOf(rolesUsers[i][j])).to.equal(expectedResults[i][j]);
+                    expect(await roleDistributors[i].userShare(rolesUsers[i][j], supportedToken.address)).to.equal(expectedResults[i][j]);
+                    //expect(await supportedToken.balanceOf(rolesUsers[i][j])).to.equal(expectedResults[i][j]);
                 }
             }            
         });
