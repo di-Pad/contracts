@@ -13,17 +13,16 @@ import "./IProfitSharingInteractions.sol";
 contract PartnersAgreement is ChainlinkClient {
     address public owner;
     address public communityAddress;
-    address public partnersContract;
+    address[] public partnersContracts;
     //address supportedTokens;
     uint256 public rolesCount;
     address public profitSharing;
 
-    mapping(address => uint) lastBlockPerUserAddress;
+    mapping(address => uint256) lastBlockPerUserAddress;
     mapping(bytes32 => address) userRequests;
 
     //TokenDistribution treasury;
     InteractionNFT partnersInteractionNFTContract;
-
 
     // Chainlink params
     address private oracle;
@@ -34,61 +33,65 @@ contract PartnersAgreement is ChainlinkClient {
         address _partnersContract,
         address _owner,
         address _communityAddress,
-        uint _rolesCount,
-        uint _numberOfActions,
+        uint256 _rolesCount,
+        uint256 _numberOfActions,
         address _oracle,
         address _chainlinkToken
     ) public {
-        require(_rolesCount == 2 || _rolesCount == 3, "Only 2 or 3 roles accepted");
+        require(
+            _rolesCount == 2 || _rolesCount == 3,
+            "Only 2 or 3 roles accepted"
+        );
         rolesCount = _rolesCount;
-        partnersContract = _partnersContract;
-        partnersInteractionNFTContract = new InteractionNFT(_rolesCount, _numberOfActions);
+        partnersContracts.push(_partnersContract);
+        partnersInteractionNFTContract = new InteractionNFT(
+            _rolesCount,
+            _numberOfActions
+        );
         owner = _owner;
         communityAddress = _communityAddress;
-        
+
         setChainlinkToken(_chainlinkToken);
         oracle = _oracle;
         jobId = "e1e26fa27aa7436c95a78a40c21f5404";
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    function getInteractionNFTContractAddress() public view returns(address) {
+    function getInteractionNFTContractAddress() public view returns (address) {
         return address(partnersInteractionNFTContract);
     }
-    
+
     function getAllMembers() public view returns (address[] memory) {
         ICommunity community = ICommunity(communityAddress);
         return community.getMemberAddresses();
     }
 
-    function queryForNewInteractions(
-        address userAddress
-    ) public {
-        require(
-            userAddress != address(0),
-            "No user address passed!"
-        );
+    function queryForNewInteractions(address userAddress) public {
+        require(userAddress != address(0), "No user address passed!");
 
-        Chainlink.Request memory req =
-            buildChainlinkRequest(
+        for (uint256 i = 0; i < partnersContracts.length; i++) {
+            Chainlink.Request memory req = buildChainlinkRequest(
                 jobId,
                 address(this),
                 this.transferInteractionNFTs.selector
             );
-        req.add("userAddress",string(abi.encodePacked(userAddress)) );
-        req.add("contractAddress", string(abi.encodePacked(partnersContract)));
-        req.add("chainId", "80001");
-        req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
-        req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
+            req.add("userAddress", string(abi.encodePacked(userAddress)));
+            req.add(
+                "contractAddress",
+                string(abi.encodePacked(partnersContracts[i]))
+            );
+            req.add("chainId", "80001");
+            req.addUint("startBlock", lastBlockPerUserAddress[userAddress]);
+            req.add("covalentAPIKey", "ckey_aae01fa51e024af3a2634d9d030");
 
-        bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
+            bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
 
-        lastBlockPerUserAddress[userAddress] = block.number;
-        userRequests[reqId] = userAddress;
-
+            lastBlockPerUserAddress[userAddress] = block.number;
+            userRequests[reqId] = userAddress;
+        }
     }
 
-    function transferInteractionNFTs(bytes32 _requestId, uint _result)
+    function transferInteractionNFTs(bytes32 _requestId, uint256 _result)
         public
         recordChainlinkFulfillment(_requestId)
     {
@@ -98,30 +101,41 @@ contract PartnersAgreement is ChainlinkClient {
         ICommunity community = ICommunity(communityAddress);
         require(community.isMember(user), "Invalid user address");
         partnersInteractionNFTContract.safeTransferFrom(
-            address(this), 
-            user, 
-            uint256(partnersInteractionNFTContract.userRoles(user)), 
-            _result, 
+            address(this),
+            user,
+            uint256(partnersInteractionNFTContract.userRoles(user)),
+            _result,
             ""
         );
         //TODO: maybe add record interactions!
         if (profitSharing != address(0)) {
-            IProfitSharingInteractions(profitSharing).recordInteraction(user, _result);
+            IProfitSharingInteractions(profitSharing).recordInteraction(
+                user,
+                _result
+            );
         }
     }
 
-    function getInteractionNFT(address user) public view returns(uint) {
+    function getInteractionNFT(address user) public view returns (uint256) {
         return partnersInteractionNFTContract.getActiveInteractions(user);
     }
 
     function setProfitSharing(address _profitSharing) public {
-        require (profitSharing == address(0), "profit sharing already set");
-        require (_profitSharing != address(0), "profit sharing address is 0");
+        require(profitSharing == address(0), "profit sharing already set");
+        require(_profitSharing != address(0), "profit sharing address is 0");
 
         profitSharing = _profitSharing;
     }
 
     function getUserRole(address _user) public view returns (uint256) {
         return uint256(partnersInteractionNFTContract.userRoles(_user));
+    }
+
+    function addNewContractAddressToAgreement(address contractAddress) public {
+        partnersContracts.push(contractAddress);
+    }
+
+    function getImportedAddresses() public view returns (address[] memory) {
+        return partnersContracts;
     }
 }
