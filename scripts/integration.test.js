@@ -51,7 +51,6 @@ async function setPartnersRegistryAddress() {
     partnersRegistryAddress
     )
   const res = await createTx.wait()
-  console.log(res)
 }
 async function createPartnersAgreement() {
   const url =

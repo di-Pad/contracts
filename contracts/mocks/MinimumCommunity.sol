@@ -15,12 +15,16 @@ import "skill-wallet/contracts/main/ISkillWallet.sol";
 contract MinimumCommunity is ICommunity {
     address private skillWalletAddress;
     uint256[] members;
-    mapping(address => bool) public override isMember;
+    bool hasTheOwnerJoined;
+    // mapping(address => bool) public override isMember;
  
     constructor(address _skillWalletAddress) public {
         skillWalletAddress = _skillWalletAddress;
     }
 
+    function isMember(address adr) public view override returns(bool) {
+        return true;
+    }
     function getMembers() public view override returns (uint256[] memory) {
         uint256[] memory members;
         return members;
@@ -50,6 +54,6 @@ contract MinimumCommunity is ICommunity {
         string memory uri,
         uint256 credits
     ) public override {
-        isMember[msg.sender] = true;
+        hasTheOwnerJoined = true;
     }
 }

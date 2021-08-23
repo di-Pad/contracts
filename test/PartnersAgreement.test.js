@@ -48,6 +48,9 @@ contract('PartnersAgreement', function (accounts) {
     await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
     await this.partnersAgreement.activatePA();
 
+    const isActive = await this.partnersAgreement.isActive();
+    assert.isTrue(isActive);
+
     await this.linkTokenMock.transfer(
       this.partnersAgreement.address,
       '2000000000000000000',
@@ -116,13 +119,13 @@ contract('PartnersAgreement', function (accounts) {
     it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
       const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
       const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
-      await interactionNFTContract.addUserToRole(accounts[1], 1);
+      await interactionNFTContract.addUserToRole(accounts[0], 1);
 
-      const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[1]);
+      const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
       assert.equal(initialInteractions.toString(), '0');
 
       let tx = await this.partnersAgreement.queryForNewInteractions(
-        accounts[1]
+        accounts[0]
       )
       let chainlinkRequestedEventEmitted =
         tx.logs[0].event === 'ChainlinkRequested'
@@ -137,14 +140,13 @@ contract('PartnersAgreement', function (accounts) {
       const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
       assert.isTrue(fulfilTxEventEmitted)
 
-      const interactions = await this.partnersAgreement.getInteractionNFT(accounts[1]);
-
+      const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
       assert.equal(interactions.toString(), '10');
     })
 
     it('should add new contract address if owner is the signer', async function () {
 
-      const ownable = await OwnableTestContract.new({ from: accounts[0]});
+      const ownable = await OwnableTestContract.new({ from: accounts[0] });
 
       await truffleAssert.reverts(
         this.partnersAgreement.addNewContractAddressToAgreement(this.partnersAgreement.address, { from: accounts[2] }),

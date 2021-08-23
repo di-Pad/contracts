@@ -129,13 +129,13 @@ contract('Interactions', function (accounts) {
 
             const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
-            await interactionNFTContract.addUserToRole(accounts[1], 1);
+            await interactionNFTContract.addUserToRole(accounts[0], 1);
 
-            const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[1]);
+            const initialInteractions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
             assert.equal(initialInteractions.toString(), '0');
 
             let tx = await this.partnersAgreement.queryForNewInteractions(
-                accounts[1]
+                accounts[0]
             )
             let chainlinkRequestedEventEmitted =
                 tx.logs[0].event === 'ChainlinkRequested'
@@ -150,7 +150,7 @@ contract('Interactions', function (accounts) {
             const fulfilTxEventEmitted = fulfilTx.logs[0].event === 'CallbackCalled'
             assert.isTrue(fulfilTxEventEmitted)
 
-            const interactions = await this.partnersAgreement.getInteractionNFT(accounts[1]);
+            const interactions = await this.partnersAgreement.getInteractionNFT(accounts[0]);
 
             assert.equal(interactions.toString(), '10');
         })

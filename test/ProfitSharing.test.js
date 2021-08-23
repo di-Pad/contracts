@@ -1,6 +1,7 @@
 const { getContractFactory } = require('@nomiclabs/hardhat-ethers/types');
 const { expectEvent, singletons, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
+const { assert } = require('eccrypto-js');
 const { Contract } = require('ethers');
 const { ZERO_ADDRESS } = constants;
 const hre = require("hardhat");
@@ -48,7 +49,6 @@ contract("ProfitSharing", (accounts) => {
         const ProfitSharingFactory = await ethers.getContractFactory("ProfitSharingFactory");
         profitSharingFactory = await ProfitSharingFactory.deploy();
 
-
     });
 
     describe("Deployment", async () => {
@@ -73,7 +73,6 @@ contract("ProfitSharing", (accounts) => {
                 }
             });
 
-
             partnersAgreement = await PartnersAgreement.deploy(
                 ZERO_ADDRESS, // partners contract
                 accounts[0],
@@ -84,10 +83,12 @@ contract("ProfitSharing", (accounts) => {
                 linkTokenMock.address
             );
 
-
             const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
             await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
             await partnersAgreement.activatePA();
+            const isActive = await partnersAgreement.isActive();
+            
+            expect(isActive).to.be.true;
         });
 
         it("Should deploy Profit Sharing contract from partners agreement", async () => {
@@ -162,6 +163,13 @@ contract("ProfitSharing", (accounts) => {
                 linkTokenMock.address
             );
             await partnersAgreement.deployed();
+
+            const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+            await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+            await partnersAgreement.activatePA();
+            const isActive = await partnersAgreement.isActive();
+
+            expect(isActive).to.be.true;
 
             await linkTokenMock.transfer(
                 partnersAgreement.address,
