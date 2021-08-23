@@ -64,6 +64,10 @@ contract('Interactions', function (accounts) {
                 { from: accounts[0] }
             );
 
+            const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
+            await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+            await partnersAgreement.activatePA();
+
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
 
@@ -97,6 +101,11 @@ contract('Interactions', function (accounts) {
                 { from: accounts[0] }
             );
 
+
+            const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
+            await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+            await partnersAgreement.activatePA();
+
             const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
 
@@ -114,6 +123,10 @@ contract('Interactions', function (accounts) {
 
         });
         it('transferInteractionNFTs should transfer the correct amount of NFTs after chainlink result is returned', async function () {
+            const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
+            await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+            await this.partnersAgreement.activatePA();
+
             const interactionNFTAddress = await this.partnersAgreement.getInteractionNFTContractAddress();
             const interactionNFTContract = await InteractionNFT.at(interactionNFTAddress);
             await interactionNFTContract.addUserToRole(accounts[1], 1);

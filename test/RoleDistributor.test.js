@@ -127,6 +127,11 @@ contract("RoleDistributor", (accounts) => {
         );
         await partnersAgreement.deployed();
 
+
+      const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+      await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+      await partnersAgreement.activatePA();
+
         await linkTokenMock.transfer(
             partnersAgreement.address,
             '2000000000000000000',
@@ -183,7 +188,7 @@ contract("RoleDistributor", (accounts) => {
         } 
     });
 
-    describe("Token Distibution", async () => {
+    describe.only("Token Distibution", async () => {
         it("Should distribute distribute tokens to users", async () => {
             for (let i = 0; i < roleDistributors.length; i++) {
                 await roleDistributors[i].distributeToUsers();

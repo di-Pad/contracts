@@ -48,7 +48,7 @@ contract("ProfitSharing", (accounts) => {
         const ProfitSharingFactory = await ethers.getContractFactory("ProfitSharingFactory");
         profitSharingFactory = await ProfitSharingFactory.deploy();
 
-        
+
     });
 
     describe("Deployment", async () => {
@@ -67,11 +67,13 @@ contract("ProfitSharing", (accounts) => {
             const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
             const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
 
-            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
+            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement", {
                 libraries: {
                     RoleUtils: roleUtils.address
                 }
             });
+
+
             partnersAgreement = await PartnersAgreement.deploy(
                 ZERO_ADDRESS, // partners contract
                 accounts[0],
@@ -81,11 +83,16 @@ contract("ProfitSharing", (accounts) => {
                 mockOracle.address,
                 linkTokenMock.address
             );
+
+
+            const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+            await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+            await partnersAgreement.activatePA();
         });
-        
+
         it("Should deploy Profit Sharing contract from partners agreement", async () => {
             const [deployer] = await ethers.getSigners();
-            
+
             const deployTx = await profitSharingFactory.deployProfitSharing(partnersAgreement.address, 10, supportedTokens.address);
             const events = (await deployTx.wait()).events?.filter((e) => {
                 return e.event == "ProfitSharingDeployed"
@@ -96,7 +103,7 @@ contract("ProfitSharing", (accounts) => {
             const profitSharingAddress = await partnersAgreement.profitSharing();
 
             expect(profitSharingAddress).not.to.equal(ZERO_ADDRESS);
-            
+
             profitSharing = await ethers.getContractAt("ProfitSharing", profitSharingAddress);
         });
 
@@ -108,14 +115,14 @@ contract("ProfitSharing", (accounts) => {
             expect(await profitSharing.supportedTokens()).to.equal(supportedTokens.address);
         })
 
-        it("Should have deployed Partners Vault", async() => {
+        it("Should have deployed Partners Vault", async () => {
             partnersVault = await ethers.getContractAt("PartnersVault", await profitSharing.partnersVault());
 
             expect(partnersVault.address).not.to.equal(ZERO_ADDRESS);
             expect(await partnersVault.profitSharingContract()).to.equal(profitSharing.address);
         });
 
-        it("Should have deployed Token Distribution contract", async() => {
+        it("Should have deployed Token Distribution contract", async () => {
             tokenDistribution = await ethers.getContractAt("TokenDistribution", await profitSharing.tokenDistribution());
 
             expect(tokenDistribution.address).not.to.equal(ZERO_ADDRESS);
@@ -133,14 +140,14 @@ contract("ProfitSharing", (accounts) => {
 
             const MockOracle = await ethers.getContractFactory("MockOracle");
             mockOracle = await MockOracle.deploy(linkTokenMock.address);
-        
+
             const SkillWallet = await ethers.getContractFactory("SkillWallet");
             const skillWallet = await SkillWallet.deploy(linkTokenMock.address, mockOracle.address);
-        
+
             const MinimumCommunity = await ethers.getContractFactory("MinimumCommunity");
             const minimumCommunity = await MinimumCommunity.deploy(skillWallet.address);
 
-            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement",             {
+            const PartnersAgreement = await ethers.getContractFactory("PartnersAgreement", {
                 libraries: {
                     RoleUtils: roleUtils.address
                 }
@@ -169,25 +176,25 @@ contract("ProfitSharing", (accounts) => {
             await partnersAgreement.setProfitSharing(events[0].args._profitSharing);
 
             const profitSharingAddress = await partnersAgreement.profitSharing();
-            
+
             profitSharing = await ethers.getContractAt("ProfitSharing", profitSharingAddress);
             partnersVault = await ethers.getContractAt("PartnersVault", await profitSharing.partnersVault());
             tokenDistribution = await ethers.getContractAt("TokenDistribution", await profitSharing.tokenDistribution());
 
             //deploy generic ERC20 and add it to supported
             const GenericERC20 = await ethers.getContractFactory("GenericERC20");
-            supportedToken = await GenericERC20.deploy("1000".concat(e18),"Supported", "SPRT");
+            supportedToken = await GenericERC20.deploy("1000".concat(e18), "Supported", "SPRT");
             //TODO: add second supported token
-            unsupportedToken = await GenericERC20.deploy("1000".concat(e18),"Unsupported", "USPRT");
+            unsupportedToken = await GenericERC20.deploy("1000".concat(e18), "Unsupported", "USPRT");
             await supportedTokens.addSupportedToken(supportedToken.address);
 
             //send some tokens to profit sharing
-            await supportedToken.transfer(profitSharing.address,"100".concat(e18));
-            await unsupportedToken.transfer(profitSharing.address,"100".concat(e18));
+            await supportedToken.transfer(profitSharing.address, "100".concat(e18));
+            await unsupportedToken.transfer(profitSharing.address, "100".concat(e18));
         });
 
         it("Should detect unshared profit", async () => {
-            expect (await profitSharing.isUnsharedProfit()).to.equal(true); 
+            expect(await profitSharing.isUnsharedProfit()).to.equal(true);
         });
 
         it("Should be possible to retrieve unsupported token from the contract", async () => {

@@ -44,6 +44,10 @@ contract('PartnersAgreement', function (accounts) {
       { from: accounts[0] }
     );
 
+    const community = await MinimumCommunity.at(await this.partnersAgreement.communityAddress());
+    await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+    await this.partnersAgreement.activatePA();
+
     await this.linkTokenMock.transfer(
       this.partnersAgreement.address,
       '2000000000000000000',
@@ -52,7 +56,7 @@ contract('PartnersAgreement', function (accounts) {
   });
   describe('Create partners agreement', async function () {
 
-    it("should deploy partners agreement contract", async function () {
+    it("should deploy inactive partners agreement contract", async function () {
 
       const partnersAgreement = await PartnersAgreement.new(
         ZERO_ADDRESS, // partners contract
@@ -65,14 +69,48 @@ contract('PartnersAgreement', function (accounts) {
         { from: accounts[0] }
       );
 
+      const isActive = await partnersAgreement.isActive();
+
+      assert.notEqual(ZERO_ADDRESS, partnersAgreement.address);
+      assert.isFalse(isActive);
+    });
+
+
+    it("should deploy and activate partners agreement contract", async function () {
+
+      const partnersAgreement = await PartnersAgreement.new(
+        ZERO_ADDRESS, // partners contract
+        accounts[0],
+        this.minimumCommunity.address,
+        3,
+        100,
+        this.mockOracle.address,
+        this.linkTokenMock.address,
+        { from: accounts[0] }
+      );
+
+      let isActive = await partnersAgreement.isActive();
+
+      assert.notEqual(ZERO_ADDRESS, partnersAgreement.address);
+      assert.isFalse(isActive);
+
+
+      const community = await MinimumCommunity.at(await partnersAgreement.communityAddress());
+      await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+      await partnersAgreement.activatePA();
+
+      isActive = await partnersAgreement.isActive();
+      assert.isTrue(isActive);
+
       const allUsers = await partnersAgreement.getAllMembers();
       const interactionNFTAddress = await partnersAgreement.getInteractionNFTContractAddress();
       const profitSharing = await partnersAgreement.profitSharing();
 
       assert.notEqual(ZERO_ADDRESS, interactionNFTAddress);
-      assert.notEqual(ZERO_ADDRESS, partnersAgreement.address);
       assert.equal(ZERO_ADDRESS, profitSharing);
       assert.equal(0, allUsers);
+
+
     });
 
     it('transferInteractionNFTs should transfer the corrent amount of NFTs depending on the chainlink fulfilled request', async function () {
@@ -104,32 +142,22 @@ contract('PartnersAgreement', function (accounts) {
       assert.equal(interactions.toString(), '10');
     })
 
-    it.only('should ', async function () {
-      const partnersAgreement = await PartnersAgreement.new(
-        ZERO_ADDRESS, // partners contract
-        accounts[0],
-        this.minimumCommunity.address,
-        3,
-        100,
-        this.mockOracle.address,
-        this.linkTokenMock.address,
-        { from: accounts[0] }
-      );
+    it('should add new contract address if owner is the signer', async function () {
 
       const ownable = await OwnableTestContract.new({ from: accounts[0]});
 
       await truffleAssert.reverts(
-        partnersAgreement.addNewContractAddressToAgreement(partnersAgreement.address, { from: accounts[2] }),
+        this.partnersAgreement.addNewContractAddressToAgreement(this.partnersAgreement.address, { from: accounts[2] }),
         'Only the owner of the contract can import it!'
       );
 
       await truffleAssert.reverts(
-        partnersAgreement.addNewContractAddressToAgreement(this.minimumCommunity.address),
+        this.partnersAgreement.addNewContractAddressToAgreement(this.minimumCommunity.address),
         "Transaction reverted: function selector was not recognized and there's no fallback function"
       );
 
-      await partnersAgreement.addNewContractAddressToAgreement(ownable.address, { from: accounts[0] });
-      const importedContracts = await partnersAgreement.getImportedAddresses();
+      await this.partnersAgreement.addNewContractAddressToAgreement(ownable.address, { from: accounts[0] });
+      const importedContracts = await this.partnersAgreement.getImportedAddresses();
       assert.equal(importedContracts[0], ZERO_ADDRESS)
       assert.equal(importedContracts[1], ownable.address)
     })
