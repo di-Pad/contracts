@@ -105,9 +105,11 @@ contract RoleDistributor is ERC1155Holder {
     function _claim(address _user, address _token) internal {
         uint256 claimingPeriod;
         uint256 toTimestamp = block.timestamp;
+        bool isPeriodOver = false;
 
         if (toTimestamp > distributionStart + distributionPeriod) {
             toTimestamp = distributionStart + distributionPeriod;
+            isPeriodOver = true;
         }
 
         if (lastClaimed[_user][_token] == 0) {
@@ -120,7 +122,7 @@ contract RoleDistributor is ERC1155Holder {
             uint256 claimLeft = userShare[_user][_token] - userClaimedShare[_user][_token];
             uint256 claimable = userShare[_user][_token].mul(claimingPeriod) / distributionPeriod;
 
-            if(claimLeft < claimable) {
+            if(claimLeft < claimable || isPeriodOver) {
                 claimable = claimLeft;
             }
 

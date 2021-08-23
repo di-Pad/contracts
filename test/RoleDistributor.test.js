@@ -196,5 +196,173 @@ contract("RoleDistributor", (accounts) => {
                 }
             }            
         });
+
+        it("Should allow to claim part of allocated tokens according to time passed from ditribution start", async () => {
+            await hre.network.provider.send("evm_increaseTime", [3600 * 24]);
+            await hre.network.provider.send("evm_mine");
+
+            const userId = 0
+            const user = rolesUsers[0][userId];
+
+            //send user some funds for gas
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+                to: user,
+                value: ethers.utils.parseEther("1") 
+            });
+
+            //impersonate
+            await hre.network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [user]
+            });
+    
+            const signer = ethers.provider.getSigner(user);
+            const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
+
+            await roleDistributorImp.claimAll();
+
+            expect(String(await supportedToken.balanceOf(user)).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults[0][userId]).div(7)).substr(0,4)
+            );
+        });
+
+        it("Should allow to claim another part of allocated tokens according to time passed from previous claim", async () => {
+            await hre.network.provider.send("evm_increaseTime", [3600 * 24]);
+            await hre.network.provider.send("evm_mine");
+
+            const userId = 0
+            const user = rolesUsers[0][userId];
+
+            //send user some funds for gas
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+                to: user,
+                value: ethers.utils.parseEther("1") 
+            });
+
+            //impersonate
+            await hre.network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [user]
+            });
+    
+            const signer = ethers.provider.getSigner(user);
+            const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
+
+            const balanceBefore = await supportedToken.balanceOf(user);
+
+            await roleDistributorImp.claimAll();
+
+            const claimedAmount = (await supportedToken.balanceOf(user)).sub(balanceBefore);
+
+            expect(String(claimedAmount).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults[0][userId]).div(7)).substr(0,4)
+            );
+        });
+
+        it("Should allow to claim the rest of allocated tokens when distribution period has passed", async () => {
+            await hre.network.provider.send("evm_increaseTime", [3600 * 24 * 5]);
+            await hre.network.provider.send("evm_mine");
+
+            const userId = 0
+            const user = rolesUsers[0][userId];
+
+            //send user some funds for gas
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+                to: user,
+                value: ethers.utils.parseEther("1") 
+            });
+
+            //impersonate
+            await hre.network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [user]
+            });
+    
+            const signer = ethers.provider.getSigner(user);
+            const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
+
+            await roleDistributorImp.claimAll();
+
+            expect(await supportedToken.balanceOf(user)).to.equal(expectedResults[0][userId]);
+            expect(await roleDistributors[0].userShare(user, supportedToken.address)).to.equal(
+                await roleDistributors[0].userClaimedShare(user, supportedToken.address)
+            );
+        });
+
+        it("Should allow to claim all allocated to user who never claimed tokens when distribution period has passed", async () => {
+            const userId = 4
+            const user = rolesUsers[0][userId];
+
+            //send user some funds for gas
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+                to: user,
+                value: ethers.utils.parseEther("1") 
+            });
+
+            //impersonate
+            await hre.network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [user]
+            });
+    
+            const signer = ethers.provider.getSigner(user);
+            const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
+
+            await roleDistributorImp.claimAll();
+
+            expect(await supportedToken.balanceOf(user)).to.equal(expectedResults[0][userId]);
+            expect(await roleDistributors[0].userShare(user, supportedToken.address)).to.equal(
+                await roleDistributors[0].userClaimedShare(user, supportedToken.address)
+            );
+        });
+
+        it("Should allow to claim allocated tokens to all other users", async () => {
+            for (let i = 0; i < roleDistributors.length; i++) {
+                for (let j = 0; j < rolesUsers[i].length; j++) {
+                    const user = rolesUsers[i][j];
+
+                    //send user some funds for gas
+                    const [deployer] = await ethers.getSigners();
+                    await deployer.sendTransaction({
+                        to: user,
+                        value: ethers.utils.parseEther("1") 
+                    });
+
+                    //impersonate
+                    await hre.network.provider.request({
+                        method: "hardhat_impersonateAccount",
+                        params: [user]
+                    });
+
+                    const signer = ethers.provider.getSigner(user);
+                    const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[i].address, signer);
+
+                    if ((await roleDistributors[i].userShare(user, supportedToken.address)).gt(
+                        await roleDistributors[i].userClaimedShare(user, supportedToken.address)
+                    )) {
+                        await roleDistributorImp.claimAll();
+
+                        expect(await supportedToken.balanceOf(user)).to.equal(expectedResults[i][j]);
+                        expect(await roleDistributors[i].userShare(user, supportedToken.address)).to.equal(
+                            await roleDistributors[i].userClaimedShare(user, supportedToken.address)
+                        );
+                    } else {
+                        expect(roleDistributorImp.claim(supportedToken.address)).to.be.revertedWith("all claimed");
+                        expect(await supportedToken.balanceOf(user)).to.equal(expectedResults[i][j]);
+                    }
+
+                }
+            }
+        });
+
+        it("Should have distributed all tokens", async () => {
+            for (let i = 0; i < roleDistributors.length; i++) {
+                expect(String(await supportedToken.balanceOf(roleDistributors[i].address)).length).to.be.lessThan(18);
+            }
+        });
     });
 });
