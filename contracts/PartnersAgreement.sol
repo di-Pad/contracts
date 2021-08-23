@@ -4,6 +4,7 @@ pragma solidity ^0.6.10;
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "skill-wallet/contracts/main/ISkillWallet.sol";
 import "skill-wallet/contracts/main/SkillWallet.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./InteractionNFT.sol";
 //import "./SupportedTokens.sol";
@@ -132,6 +133,8 @@ contract PartnersAgreement is ChainlinkClient {
     }
 
     function addNewContractAddressToAgreement(address contractAddress) public {
+        Ownable con = Ownable(contractAddress);
+        require(con.owner() == msg.sender, 'Only the owner of the contract can import it!');
         partnersContracts.push(contractAddress);
     }
 
