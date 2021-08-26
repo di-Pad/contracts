@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.7.4;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -11,7 +10,7 @@ import "./ISupportedTokens.sol";
 import "./IPartnersAgreementInteractions.sol";
 import "./RoleDistributor.sol";
 
-contract TokenDistribution is ERC1155Burnable {
+contract TokenDistribution {
     using SafeMath for uint256;
 
     struct userRoleId {
@@ -38,7 +37,7 @@ contract TokenDistribution is ERC1155Burnable {
     uint256 distributionPeriod = 7 days; //TODO: populate with param
     uint256 cycle = 1;
 
-    constructor(address _partnersAgreement, address _supportedTokens, uint256 _rolesCount, string memory _uri) ERC1155(_uri) {
+    constructor(address _partnersAgreement, address _supportedTokens, uint256 _rolesCount) {
         require (_rolesCount == 2 || _rolesCount == 3, "Roles count is not 2 or 3");
         
         partnersAgreement = _partnersAgreement;
@@ -99,8 +98,6 @@ contract TokenDistribution is ERC1155Burnable {
         //get weights
         uint256[] memory weights = QuadraticDistribution.calcWeights(unweigted, rolesCount);
 
-        //mint role ERC1155 and distribute funds
-        bool mint1155 = true; //ERC1155 should be minted only once
         bool hasFunds = false; //to know if there were any funds
 
         for (uint i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
@@ -113,12 +110,6 @@ contract TokenDistribution is ERC1155Burnable {
                 uint256[] memory weighted = QuadraticDistribution.calcWeightedAlloc(balance, weights);
             
                 for (uint j = 0; j < rolesCount; j++) {
-                    //mint ERC1155
-                    if (mint1155) {
-                        _mint(roleDistributors[RoleUtils.Roles(j + 1)],j, weights[j], "");
-                        mint1155 = false;
-                    }
-
                     //send tokens                    
                     IERC20(supportedTokens.supportedTokens(i)).transfer(roleDistributors[RoleUtils.Roles(j + 1)], weighted[j]);
                 }

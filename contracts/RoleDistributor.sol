@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.7.4;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 //import "./TokenDistribution.sol";
 import "./ISupportedTokens.sol";
 
-contract RoleDistributor is ERC1155Holder {
+contract RoleDistributor {
     using SafeMath for uint256;
     
     uint256 constant PRECISION = 1e6;
