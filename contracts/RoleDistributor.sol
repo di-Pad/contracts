@@ -84,6 +84,7 @@ contract RoleDistributor is ERC1155Holder {
         isCalculated = true;
     }
 
+    //claim all tokens claimable by msg.sender
     function claimAll() public {
         require(isCalculated, "shares not calculated");
 
@@ -93,6 +94,7 @@ contract RoleDistributor is ERC1155Holder {
         }
     }
 
+    //claim particular supported token claimable by msg.sender
     function claim(address _token) public {
         require(isCalculated, "shares not calculated");
         require(supportedTokens.isTokenSupported(_token), "token not supported");
@@ -100,6 +102,28 @@ contract RoleDistributor is ERC1155Holder {
         require(userShare[msg.sender][_token] > 0, "nothing to claim");
 
         _claim(msg.sender, _token);      
+    }
+
+    //claim all claimable tokens on behalf of user
+    function claimAllOnBehalf(address _user) public {
+        require(isCalculated, "shares not calculated");
+
+        for (uint256 i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            address token = supportedTokens.supportedTokens(i);
+            _claim(_user, token);
+        }
+    }
+
+    //claim all claimable tokens on behalf of all users
+    function claimForAll() public {
+        require(isCalculated, "shares not calculated");
+
+        for (uint256 i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            address token = supportedTokens.supportedTokens(i);
+            for (uint256 j = 0; j < users.length; j++)
+                _claim(users[j], token);
+        }
+
     }
 
     function _claim(address _user, address _token) internal {

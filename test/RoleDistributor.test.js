@@ -261,6 +261,22 @@ contract("RoleDistributor", (accounts) => {
             );
         });
 
+        it("Should allow to claim on behalf of ther user", async () => {
+
+            const userId = 1
+            const user = rolesUsers[0][userId];
+
+            const balanceBefore = await supportedToken.balanceOf(user);
+
+            await roleDistributors[0].claimAllOnBehalf(user);
+
+            const claimedAmount = (await supportedToken.balanceOf(user)).sub(balanceBefore);
+
+            expect(String(claimedAmount).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults[0][userId]).div(7).mul(2)).substr(0,4)
+            );
+        });
+
         it("Should allow to claim the rest of allocated tokens when distribution period has passed", async () => {
             await hre.network.provider.send("evm_increaseTime", [3600 * 24 * 5]);
             await hre.network.provider.send("evm_mine");
