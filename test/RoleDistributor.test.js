@@ -20,6 +20,7 @@ let profitSharing;
 let partnersVault;
 let tokenDistribution;
 let supportedToken;
+let supportedToken1;
 let mockOracle;
 let partnersAgreement;
 
@@ -75,6 +76,23 @@ let expectedResults = [
         "2560000000000000000000"
     ]
 ];
+
+let expectedResults1 = [
+    [
+        "13090320000000000000",
+        "52363440000000000000",
+        "117817920000000000000",
+        "209454480000000000000",
+        "327272400000000000000"
+    ],
+    [
+        "56888320000000000000",
+        "128000000000000000000",
+        "227554560000000000000",
+        "355554560000000000000",
+        "512000000000000000000"
+    ]
+]
 
 contract("RoleDistributor", (accounts) => {
     before(async () => {
@@ -150,6 +168,9 @@ contract("RoleDistributor", (accounts) => {
         supportedToken = await GenericERC20.deploy("1000000".concat(e18),"Supported", "SPRT");
         await supportedTokens.addSupportedToken(supportedToken.address);
         await supportedToken.transfer(profitSharing.address,"50000".concat(e18));
+        supportedToken1 = await GenericERC20.deploy("1000000".concat(e18),"Supported1", "SPRT1");
+        await supportedTokens.addSupportedToken(supportedToken1.address);
+        await supportedToken1.transfer(profitSharing.address,"10000".concat(e18));
         await profitSharing.splitAllProfits();
 
         //simulate some interations
@@ -192,6 +213,7 @@ contract("RoleDistributor", (accounts) => {
 
                 for (let j = 0; j < rolesUsers[i].length; j++) {
                     expect(await roleDistributors[i].userShare(rolesUsers[i][j], supportedToken.address)).to.equal(expectedResults[i][j]);
+                    expect(await roleDistributors[i].userShare(rolesUsers[i][j], supportedToken1.address)).to.equal(expectedResults1[i][j]);
                     //expect(await supportedToken.balanceOf(rolesUsers[i][j])).to.equal(expectedResults[i][j]);
                 }
             }            
@@ -225,6 +247,9 @@ contract("RoleDistributor", (accounts) => {
             expect(String(await supportedToken.balanceOf(user)).substr(0,4)).to.equal(
                 String(ethers.BigNumber.from(expectedResults[0][userId]).div(7)).substr(0,4)
             );
+            expect(String(await supportedToken1.balanceOf(user)).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults1[0][userId]).div(7)).substr(0,4)
+            );
         });
 
         it("Should allow to claim another part of allocated tokens according to time passed from previous claim", async () => {
@@ -251,13 +276,18 @@ contract("RoleDistributor", (accounts) => {
             const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
 
             const balanceBefore = await supportedToken.balanceOf(user);
+            const balanceBefore1 = await supportedToken1.balanceOf(user);
 
             await roleDistributorImp.claimAll();
 
             const claimedAmount = (await supportedToken.balanceOf(user)).sub(balanceBefore);
+            const claimedAmount1 = (await supportedToken1.balanceOf(user)).sub(balanceBefore1);
 
             expect(String(claimedAmount).substr(0,4)).to.equal(
                 String(ethers.BigNumber.from(expectedResults[0][userId]).div(7)).substr(0,4)
+            );
+            expect(String(claimedAmount1).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults1[0][userId]).div(7)).substr(0,4)
             );
         });
 
@@ -266,13 +296,18 @@ contract("RoleDistributor", (accounts) => {
             const user = rolesUsers[0][userId];
 
             const balanceBefore = await supportedToken.balanceOf(user);
+            const balanceBefore1 = await supportedToken1.balanceOf(user);
 
             await roleDistributors[0].claimAllOnBehalf(user);
 
             const claimedAmount = (await supportedToken.balanceOf(user)).sub(balanceBefore);
+            const claimedAmount1 = (await supportedToken1.balanceOf(user)).sub(balanceBefore1);
 
             expect(String(claimedAmount).substr(0,4)).to.equal(
                 String(ethers.BigNumber.from(expectedResults[0][userId]).div(7).mul(2)).substr(0,4)
+            );
+            expect(String(claimedAmount1).substr(0,4)).to.equal(
+                String(ethers.BigNumber.from(expectedResults1[0][userId]).div(7).mul(2)).substr(0,4)
             );
         });
 
@@ -282,6 +317,9 @@ contract("RoleDistributor", (accounts) => {
             for(let i = 0; i < rolesUsers[1].length; i++){
                 expect(String(await supportedToken.balanceOf(rolesUsers[1][i])).substr(0,3)).to.equal(
                     String(ethers.BigNumber.from(expectedResults[1][i]).div(7).mul(2)).substr(0,3)
+                );
+                expect(String(await supportedToken1.balanceOf(rolesUsers[1][i])).substr(0,3)).to.equal(
+                    String(ethers.BigNumber.from(expectedResults1[1][i]).div(7).mul(2)).substr(0,3)
                 );
             }
         });
@@ -306,22 +344,30 @@ contract("RoleDistributor", (accounts) => {
             const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
 
             const balanceBefore = await supportedToken.balanceOf(roleDistributors[0].address);
+            const balanceBefore1 = await supportedToken1.balanceOf(roleDistributors[0].address);
 
             await roleDistributorImp.claimAll();
 
             expect(await supportedToken.balanceOf(user)).to.equal("0");
             expect(await supportedToken.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore);
+
+            expect(await supportedToken1.balanceOf(user)).to.equal("0");
+            expect(await supportedToken1.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore1);
         });
 
         it("Should not send any tokens if claiming on behalf of user who is not in distribution", async () => {
             const user = deadbeefAddress;
 
             const balanceBefore = await supportedToken.balanceOf(roleDistributors[0].address);
+            const balanceBefore1 = await supportedToken1.balanceOf(roleDistributors[0].address);
 
             await roleDistributors[0].claimAllOnBehalf(user);
 
             expect(await supportedToken.balanceOf(user)).to.equal("0");
             expect(await supportedToken.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore);
+
+            expect(await supportedToken1.balanceOf(user)).to.equal("0");
+            expect(await supportedToken1.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore1);
         });
 
 
@@ -354,6 +400,11 @@ contract("RoleDistributor", (accounts) => {
             expect(await roleDistributors[0].userShare(user, supportedToken.address)).to.equal(
                 await roleDistributors[0].userClaimedShare(user, supportedToken.address)
             );
+
+            expect(await supportedToken1.balanceOf(user)).to.equal(expectedResults1[0][userId]);
+            expect(await roleDistributors[0].userShare(user, supportedToken1.address)).to.equal(
+                await roleDistributors[0].userClaimedShare(user, supportedToken1.address)
+            );
         });
 
         it("Should allow to claim all allocated to user who never claimed tokens when distribution period has passed", async () => {
@@ -382,6 +433,11 @@ contract("RoleDistributor", (accounts) => {
             expect(await roleDistributors[0].userShare(user, supportedToken.address)).to.equal(
                 await roleDistributors[0].userClaimedShare(user, supportedToken.address)
             );
+
+            expect(await supportedToken1.balanceOf(user)).to.equal(expectedResults1[0][userId]);
+            expect(await roleDistributors[0].userShare(user, supportedToken1.address)).to.equal(
+                await roleDistributors[0].userClaimedShare(user, supportedToken1.address)
+            );
         });
 
         it("Should allow to claim allocated tokens to all other users", async () => {
@@ -406,7 +462,10 @@ contract("RoleDistributor", (accounts) => {
                     const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[i].address, signer);
 
                     if ((await roleDistributors[i].userShare(user, supportedToken.address)).gt(
-                        await roleDistributors[i].userClaimedShare(user, supportedToken.address)
+                            await roleDistributors[i].userClaimedShare(user, supportedToken.address) 
+                        ) ||
+                        (await roleDistributors[i].userShare(user, supportedToken1.address)).gt(
+                            await roleDistributors[i].userClaimedShare(user, supportedToken1.address)          
                     )) {
                         await roleDistributorImp.claimAll();
 
@@ -414,11 +473,18 @@ contract("RoleDistributor", (accounts) => {
                         expect(await roleDistributors[i].userShare(user, supportedToken.address)).to.equal(
                             await roleDistributors[i].userClaimedShare(user, supportedToken.address)
                         );
+
+                        expect(await supportedToken1.balanceOf(user)).to.equal(expectedResults1[i][j]);
+                        expect(await roleDistributors[i].userShare(user, supportedToken1.address)).to.equal(
+                            await roleDistributors[i].userClaimedShare(user, supportedToken1.address)
+                        );
                     } else {
                         expect(roleDistributorImp.claim(supportedToken.address)).to.be.revertedWith("all claimed");
                         expect(await supportedToken.balanceOf(user)).to.equal(expectedResults[i][j]);
-                    }
 
+                        expect(roleDistributorImp.claim(supportedToken1.address)).to.be.revertedWith("all claimed");
+                        expect(await supportedToken1.balanceOf(user)).to.equal(expectedResults1[i][j]);
+                    }
                 }
             }
         });
@@ -426,6 +492,7 @@ contract("RoleDistributor", (accounts) => {
         it("Should have distributed all tokens", async () => {
             for (let i = 0; i < roleDistributors.length; i++) {
                 expect(String(await supportedToken.balanceOf(roleDistributors[i].address)).length).to.be.lessThan(18);
+                expect(String(await supportedToken1.balanceOf(roleDistributors[i].address)).length).to.be.lessThan(18);
             }
         });
     });

@@ -20,6 +20,7 @@ let profitSharing;
 let partnersVault;
 let tokenDistribution;
 let supportedToken;
+let supportedToken1;
 let unsupportedToken;
 let partnersAgreement;
 let mockOracle;
@@ -64,6 +65,10 @@ let roleDistributors = [];
 let expectedResult = [
     "3600000000000000000000",
     "6400000000000000000000"
+];
+let expectedResult1 = [
+    "720000000000000000000",
+    "1280000000000000000000"
 ];
 
 contract("TokenDistribution", (accounts) => {
@@ -138,8 +143,11 @@ contract("TokenDistribution", (accounts) => {
         //send some tokens to profit sharing contract and share them
         const GenericERC20 = await ethers.getContractFactory("GenericERC20");
         supportedToken = await GenericERC20.deploy("1000000".concat(e18),"Supported", "SPRT");
+        supportedToken1 = await GenericERC20.deploy("1000000".concat(e18),"Supported1", "SPRT1");
         await supportedTokens.addSupportedToken(supportedToken.address);
         await supportedToken.transfer(profitSharing.address,"50000".concat(e18));
+        await supportedTokens.addSupportedToken(supportedToken1.address);
+        await supportedToken1.transfer(profitSharing.address,"10000".concat(e18));
         await profitSharing.splitAllProfits();
 
         //simulate some interations
@@ -183,9 +191,11 @@ contract("TokenDistribution", (accounts) => {
 
                 //console.log(roleDistributors[i], String(await supportedToken.balanceOf(roleDistributors[i])));
                 expect(await supportedToken.balanceOf(roleDistributors[i])).to.equal(expectedResult[i]);
+                expect(await supportedToken1.balanceOf(roleDistributors[i])).to.equal(expectedResult1[i]);
             }
             
             expect(await supportedToken.balanceOf(tokenDistribution.address)).to.equal("0");
+            expect(await supportedToken1.balanceOf(tokenDistribution.address)).to.equal("0");
         });
 
         it("Should not allow another distribution before end of the cycle", async () => {
