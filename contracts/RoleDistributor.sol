@@ -136,9 +136,9 @@ contract RoleDistributor {
         }
 
         if (lastClaimed[_user][_token] == 0) {
-            claimingPeriod = toTimestamp - distributionStart;
+            claimingPeriod = toTimestamp.sub(distributionStart);
         } else {
-            claimingPeriod = toTimestamp - lastClaimed[_user][_token];
+            claimingPeriod = toTimestamp.sub(lastClaimed[_user][_token]);
         }
 
         if (userShare[_user][_token] > userClaimedShare[_user][_token]) {

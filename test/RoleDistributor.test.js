@@ -262,7 +262,6 @@ contract("RoleDistributor", (accounts) => {
         });
 
         it("Should allow to claim on behalf of ther user", async () => {
-
             const userId = 1
             const user = rolesUsers[0][userId];
 
@@ -276,6 +275,55 @@ contract("RoleDistributor", (accounts) => {
                 String(ethers.BigNumber.from(expectedResults[0][userId]).div(7).mul(2)).substr(0,4)
             );
         });
+
+        it("Should allow to claim on behalf of all users", async () => {
+            await roleDistributors[1].claimForAll();
+
+            for(let i = 0; i < rolesUsers[1].length; i++){
+                expect(String(await supportedToken.balanceOf(rolesUsers[1][i])).substr(0,3)).to.equal(
+                    String(ethers.BigNumber.from(expectedResults[1][i]).div(7).mul(2)).substr(0,3)
+                );
+            }
+        });
+
+        it("Should not send any tokens if claiming user is not in distribution", async () => {
+            const user = deadbeefAddress;
+
+            //send user some funds for gas
+            const [deployer] = await ethers.getSigners();
+            await deployer.sendTransaction({
+                to: user,
+                value: ethers.utils.parseEther("1") 
+            });
+
+            //impersonate
+            await hre.network.provider.request({
+                method: "hardhat_impersonateAccount",
+                params: [user]
+            });
+    
+            const signer = ethers.provider.getSigner(user);
+            const roleDistributorImp = await ethers.getContractAt("RoleDistributor", roleDistributors[0].address, signer);
+
+            const balanceBefore = await supportedToken.balanceOf(roleDistributors[0].address);
+
+            await roleDistributorImp.claimAll();
+
+            expect(await supportedToken.balanceOf(user)).to.equal("0");
+            expect(await supportedToken.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore);
+        });
+
+        it("Should not send any tokens if claiming on behalf of user who is not in distribution", async () => {
+            const user = deadbeefAddress;
+
+            const balanceBefore = await supportedToken.balanceOf(roleDistributors[0].address);
+
+            await roleDistributors[0].claimAllOnBehalf(user);
+
+            expect(await supportedToken.balanceOf(user)).to.equal("0");
+            expect(await supportedToken.balanceOf(roleDistributors[0].address)).to.equal(balanceBefore);
+        });
+
 
         it("Should allow to claim the rest of allocated tokens when distribution period has passed", async () => {
             await hre.network.provider.send("evm_increaseTime", [3600 * 24 * 5]);
