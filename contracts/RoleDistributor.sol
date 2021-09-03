@@ -1,38 +1,29 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.7.4;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./TokenDistribution.sol";
+//import "./TokenDistribution.sol";
 import "./ISupportedTokens.sol";
 
-import {
-    ISuperfluid,
-    ISuperToken,
-    ISuperAgreement
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol"; 
-
-import {
-    IConstantFlowAgreementV1
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
-
-contract RoleDistributor is ERC1155Holder {
+contract RoleDistributor {
     using SafeMath for uint256;
     
     uint256 constant PRECISION = 1e6;
-    //TODO: parametrize this:
-    ISuperfluid constant HOST = ISuperfluid(0xEB796bdb90fFA0f28255275e16936D25d3418603);
-    IConstantFlowAgreementV1 constant CFA = IConstantFlowAgreementV1(0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873);
 
     uint256 public role;
     //uint256 public totalInteractions;
     address[] public users;
     uint256[] public userInteractions;
+    mapping (address => mapping (address => uint256)) public userShare;
+    mapping (address => mapping (address => uint256)) public userClaimedShare;
+    mapping (address => mapping (address => uint256)) public lastClaimed;
     //mapping (address => uint256) userInteractions;
-    address tokenDistribution;
-    ISupportedTokens supportedTokens;
-    uint256 divider;
+    address public tokenDistribution;
+    ISupportedTokens public supportedTokens;
+    uint256 public distributionPeriod;
+    uint256 public distributionStart;
+    bool public isCalculated;
 
     constructor(
         uint256 _role,
@@ -41,16 +32,20 @@ contract RoleDistributor is ERC1155Holder {
         uint256[] memory _userInteractions,
         ISupportedTokens _supportedTokens
     ) {
+        require (_distributionPeriod > 0, "distribution period is 0");
+
         tokenDistribution = msg.sender;
         role = _role;
         users = _users;
         supportedTokens = _supportedTokens;
         userInteractions = _userInteractions;
-        divider = (_distributionPeriod / 24 / 3600); //replace 7 with param (weekly/monthly)
+        isCalculated = false;
+        distributionPeriod = _distributionPeriod;
+        distributionStart = block.timestamp;
     }
-
-    //TODO: to add superflow integration to distribution    
-    function distributeToUsers() public {
+   
+    function calculateShares() public {
+        require(!isCalculated, "already calculated");
         //require(msg.sender == tokenDistribution, "!Token Distribution contract");
 
         uint256 totalInteractions;
@@ -78,28 +73,92 @@ contract RoleDistributor is ERC1155Holder {
                     if (weights[j] > 0) {
                         uint256 amountToDistribute = weights[j].mul(balance).div(PRECISION);
                         //for testing tokens are sent to users without creating a flow. To be removed after testing
-                        IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
-                        //_createStream(users[j], supportedTokens.supportedTokens(i), amountToDistribute);
+                        //IERC20(supportedTokens.supportedTokens(i)).transfer(users[j], amountToDistribute);
+                        userShare[users[j]][supportedTokens.supportedTokens(i)] = amountToDistribute;
                     }
                 }
             }
         }
+
+        isCalculated = true;
     }
 
-    function _createStream(address _receiver, address _token, uint256 _amount) internal {
-        HOST.callAgreement(
-            CFA,
-            abi.encodeWithSelector(
-                CFA.createFlow.selector,
-                ISuperToken(_token),
-                _receiver,
-                uint256((_amount) / divider), 
-                //uint256((25 * 1e18) / (15 / 24 / 3600)),
-                new bytes(0)
-            ),
-            "0x"
-        );
+    //claim all tokens claimable by msg.sender
+    function claimAll() public {
+        require(isCalculated, "shares not calculated");
+
+        for (uint256 i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            address token = supportedTokens.supportedTokens(i);
+            _claim(msg.sender, token);
+        }
     }
 
+    //claim particular supported token claimable by msg.sender
+    function claim(address _token) public {
+        require(isCalculated, "shares not calculated");
+        require(supportedTokens.isTokenSupported(_token), "token not supported");
+        require(userShare[msg.sender][_token] > userClaimedShare[msg.sender][_token], "all claimed");
+        require(userShare[msg.sender][_token] > 0, "nothing to claim");
 
+        _claim(msg.sender, _token);      
+    }
+
+    //claim all claimable tokens on behalf of user
+    function claimAllOnBehalf(address _user) public {
+        require(isCalculated, "shares not calculated");
+
+        for (uint256 i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            address token = supportedTokens.supportedTokens(i);
+            _claim(_user, token);
+        }
+    }
+
+    //claim all claimable tokens on behalf of all users
+    function claimForAll() public {
+        require(isCalculated, "shares not calculated");
+
+        for (uint256 i = 0; i < supportedTokens.getSupportedTokensCount(); i++) {
+            address token = supportedTokens.supportedTokens(i);
+            for (uint256 j = 0; j < users.length; j++)
+                _claim(users[j], token);
+        }
+
+    }
+
+    function _claim(address _user, address _token) internal {
+        uint256 claimingPeriod;
+        uint256 toTimestamp = block.timestamp;
+        bool isPeriodOver = false;
+
+        if (toTimestamp > distributionStart + distributionPeriod) {
+            toTimestamp = distributionStart + distributionPeriod;
+            isPeriodOver = true;
+        }
+
+        if (lastClaimed[_user][_token] == 0) {
+            claimingPeriod = toTimestamp.sub(distributionStart);
+        } else {
+            claimingPeriod = toTimestamp.sub(lastClaimed[_user][_token]);
+        }
+
+        if (userShare[_user][_token] > userClaimedShare[_user][_token]) {
+            uint256 claimLeft = userShare[_user][_token] - userClaimedShare[_user][_token];
+            uint256 claimable = userShare[_user][_token].mul(claimingPeriod) / distributionPeriod;
+
+            if(claimLeft < claimable || isPeriodOver) {
+                claimable = claimLeft;
+            }
+
+            //TODO: Should transfer all or not transfer at all?                
+            if(IERC20(_token).balanceOf(address(this)) < claimable) {
+                claimable = IERC20(_token).balanceOf(address(this));
+            }
+
+            if(claimable > 0) {
+                userClaimedShare[_user][_token] = userClaimedShare[_user][_token] + claimable;
+                lastClaimed[_user][_token] = toTimestamp;
+                IERC20(_token).transfer(_user, claimable);
+            }
+        }
+    }
 }

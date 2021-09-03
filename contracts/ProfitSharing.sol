@@ -22,7 +22,7 @@ contract ProfitSharing {
 
         partnersVault = new PartnersVault();
         partner = _partner;
-        tokenDistribution = address(new TokenDistribution(_partenrsAgreement, _supportedTokens, _rolesCount, ""));
+        tokenDistribution = address(new TokenDistribution(_partenrsAgreement, _supportedTokens, _rolesCount));
         sharedProfit = _sharedProfit;
         supportedTokens = ISupportedTokens(_supportedTokens);
     }
