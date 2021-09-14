@@ -48,7 +48,7 @@ contract PartnersRegistry {
             "Template should be between 0 and 2"
         );
         require(
-            numberOfActions > 0 && template <= 100,
+            numberOfActions > 0 && numberOfActions <= 100,
             "Number of actions should be between 1 and 100"
         );
 
