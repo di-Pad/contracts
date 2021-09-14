@@ -8,7 +8,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const main = async () => {
     const deployerWallet = ethers.provider.getSigner();
     const deployerWalletAddress = await deployerWallet.getAddress();
-    const distributedTownAddress = "0x3AF9ba336effE591bfC0BF0ADe8Ec5e069589075";
+    const distributedTownAddress = "0xB4E068Ea3f5086b76c3BC2Fbae4c5e59453207F8";
     let defaultSupportedTokensAddress = "0x19C1D1f6c04bEf9eE82e8a97Dd89d8d228e3472B";
 
     console.log("\n\n 📡 Deploying...\n");

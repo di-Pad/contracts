@@ -122,6 +122,13 @@ contract("TokenDistribution", (accounts) => {
         );
         await partnersAgreement.deployed();
 
+        const community = await MinimumCommunity.attach(await partnersAgreement.communityAddress());
+        await community.joinNewMember(0, 0, 0, 0, 0, 0, '', 2000);
+        await partnersAgreement.activatePA();
+        const isActive = await partnersAgreement.isActive();
+        
+        expect(isActive).to.be.true;
+
         await linkTokenMock.transfer(
             partnersAgreement.address,
             '200000000000000000000',
