@@ -69,6 +69,9 @@ contract PartnersRegistry {
         ICommunity community = ICommunity(communityAddress);
         uint256 credits;
 
+        if (partnersContractAddress == address(0))
+            partnersContractAddress = communityAddress;
+
         PartnersAgreement agreement = new PartnersAgreement(
             partnersContractAddress,
             msg.sender,
